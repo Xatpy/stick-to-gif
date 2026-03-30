@@ -351,6 +351,13 @@ export default function App() {
               <button
                 type="button"
                 className="button button--secondary"
+                onClick={() => setGuideModalOpen(true)}
+              >
+                Guide
+              </button>
+              <button
+                type="button"
+                className="button button--secondary"
                 onClick={() => setSetupModalOpen(true)}
               >
                 Setup
@@ -412,13 +419,6 @@ export default function App() {
               <div className="panel__actions">
                 <button
                   type="button"
-                  className="button button--secondary"
-                  onClick={() => setGuideModalOpen(true)}
-                >
-                  Guide
-                </button>
-                <button
-                  type="button"
                   className="button"
                   onClick={handleTrack}
                   disabled={!readyToTrack || status.stage !== 'idle'}
@@ -466,22 +466,24 @@ export default function App() {
                 <p className="eyebrow">Step 3</p>
                 <h2>Tracked result</h2>
               </div>
-              <button
-                type="button"
-                className="button"
-                onClick={() => handleExport('gif')}
-                disabled={status.stage !== 'idle'}
-              >
-                Export GIF
-              </button>
-              <button
-                type="button"
-                className="button button--secondary"
-                onClick={() => handleExport('webp')}
-                disabled={status.stage !== 'idle'}
-              >
-                Export WebP
-              </button>
+              <div className="panel__actions panel__actions--export">
+                <button
+                  type="button"
+                  className="button button--secondary"
+                  onClick={() => handleExport('webp')}
+                  disabled={status.stage !== 'idle'}
+                >
+                  Export WebP
+                </button>
+                <button
+                  type="button"
+                  className="button"
+                  onClick={() => handleExport('gif')}
+                  disabled={status.stage !== 'idle'}
+                >
+                  Export GIF
+                </button>
+              </div>
             </div>
             <PreviewPlayer gif={gif} overlay={overlay} trackingFrames={trackingFrames} />
           </div>

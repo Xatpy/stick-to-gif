@@ -267,6 +267,11 @@ input {
   flex-wrap: wrap;
 }
 
+.panel__actions--export {
+  margin-left: auto;
+  justify-content: flex-end;
+}
+
 .panel__copy {
   margin: 6px 0 10px;
 }
@@ -468,6 +473,11 @@ input {
 
   .panel__actions .button {
     flex: 1 1 0;
+  }
+
+  .panel__actions--export {
+    margin-left: 0;
+    justify-content: stretch;
   }
 
   .preview-controls {
