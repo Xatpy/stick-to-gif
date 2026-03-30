@@ -517,7 +517,10 @@ export default function App() {
         {/* Sidebar */}
         <aside className="sidebar">
           <div className="sidebar__brand" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <img src={logoAsset} alt="StickToGif" className="brand-logo" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <img src={logoAsset} alt="" className="brand-logo" />
+              <span className="brand-text">StickToGif</span>
+            </div>
             <button
               type="button"
               className="playback-bar__btn"

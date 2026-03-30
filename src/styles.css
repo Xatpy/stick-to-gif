@@ -77,6 +77,14 @@ button, input, textarea, select { font: inherit; }
   width: auto;
 }
 
+.brand-text {
+  font-weight: 900;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+  color: var(--primary-strong);
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+}
+
 .sidebar__step {
   padding: 18px 20px;
   flex: 1;
@@ -624,14 +632,14 @@ button, input, textarea, select { font: inherit; }
     order: 2;
   }
 
-  /* 2a. Headline (Empty State) */
+  /* 2a. Headline (Empty State -> bottom area) */
   .empty-canvas {
-    order: 3;
+    order: 4;
     background: transparent;
     border: none;
     min-height: auto;
-    padding: 0;
-    margin-top: auto;
+    padding: 24px 8px 16px;
+    margin: 0;
   }
 
   .empty-canvas h1 {
@@ -644,13 +652,27 @@ button, input, textarea, select { font: inherit; }
     display: none;
   }
 
-  /* 2b. Canvas Box (Loaded State) */
+  /* 2b. DropZone (Empty State -> top large area) */
+  .product-frame--empty .sidebar__step {
+    order: 3;
+    flex: 1 1 0; /* Fill the top large area */
+    display: flex;
+    padding: 0;
+    margin: 0;
+    border-top: none;
+  }
+  .product-frame--empty .drop-zone {
+    flex: 1; /* Stretch the dashed box to fill the space */
+    margin-bottom: 0;
+  }
+
+  /* 3. Canvas Box (Loaded State -> top large area) */
   .canvas-stage {
     order: 3;
-    min-height: auto;
-    flex: 0 0 auto; /* Prevent stretching, completely wrap the image */
-    padding: 4px;
-    border-radius: 12px;
+    flex: 1 1 0; /* Fill the top large area */
+    min-height: 0;
+    padding: 8px; /* Slightly more padding for the gradient box */
+    border-radius: 16px;
     width: 100%;
   }
 
@@ -662,18 +684,12 @@ button, input, textarea, select { font: inherit; }
     padding: 12px 0 0;
   }
 
-  /* 4. Bottom Sheet Controls  */
+  /* 5. Bottom Sheet Controls (Loaded state -> bottom area) */
   .sidebar__step {
     order: 5;
-    margin-top: auto; /* Anchors the controls exactly to the bottom of the screen */
-    padding: 24px 0 16px; 
+    margin: 0;
+    padding: 16px 0; 
     border-top: 1px solid rgba(99, 88, 79, 0.1);
-  }
-
-  /* Special overrides for balancing the Empty State vertical center */
-  .product-frame--empty .sidebar__step {
-    border-top: none;
-    margin-bottom: auto; /* Counters the margin-top: auto of headline */
   }
 
   /* Ensure 44px tap targets for mobile */
