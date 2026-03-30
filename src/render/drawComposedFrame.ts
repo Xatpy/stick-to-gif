@@ -12,8 +12,34 @@ interface DrawOptions {
   blurStyle?: BlurStyle | null;
 }
 
-const baseCanvas = document.createElement('canvas');
-const baseContext = baseCanvas.getContext('2d');
+interface ScratchCanvases {
+  baseCanvas: HTMLCanvasElement;
+  baseContext: CanvasRenderingContext2D;
+  mosaicCanvas: HTMLCanvasElement;
+  mosaicContext: CanvasRenderingContext2D;
+}
+
+const scratchCanvases = new WeakMap<HTMLCanvasElement, ScratchCanvases>();
+
+function getScratchCanvases(targetCanvas: HTMLCanvasElement): ScratchCanvases {
+  const existing = scratchCanvases.get(targetCanvas);
+  if (existing) {
+    return existing;
+  }
+
+  const baseCanvas = document.createElement('canvas');
+  const baseContext = baseCanvas.getContext('2d');
+  const mosaicCanvas = document.createElement('canvas');
+  const mosaicContext = mosaicCanvas.getContext('2d');
+
+  if (!baseContext || !mosaicContext) {
+    throw new Error('Unable to create a shared render context.');
+  }
+
+  const created = { baseCanvas, baseContext, mosaicCanvas, mosaicContext };
+  scratchCanvases.set(targetCanvas, created);
+  return created;
+}
 
 export function drawComposedFrame({
   context,
@@ -25,9 +51,7 @@ export function drawComposedFrame({
   blurRegion,
   blurStyle,
 }: DrawOptions) {
-  if (!baseContext) {
-    throw new Error('Unable to create a shared render context.');
-  }
+  const { baseCanvas, baseContext, mosaicCanvas, mosaicContext } = getScratchCanvases(context.canvas);
 
   if (baseCanvas.width !== frame.width || baseCanvas.height !== frame.height) {
     baseCanvas.width = frame.width;
@@ -52,24 +76,24 @@ export function drawComposedFrame({
       const smallW = Math.max(1, Math.ceil(rw / blockSize));
       const smallH = Math.max(1, Math.ceil(rh / blockSize));
 
-      const tmpCanvas = document.createElement('canvas');
-      tmpCanvas.width = smallW;
-      tmpCanvas.height = smallH;
-      const tmpCtx = tmpCanvas.getContext('2d');
-
-      if (tmpCtx) {
-        // Downscale
-        tmpCtx.imageSmoothingEnabled = true;
-        tmpCtx.drawImage(context.canvas, rx, ry, rw, rh, 0, 0, smallW, smallH);
-
-        // Upscale with nearest-neighbor (pixelated)
-        context.save();
-        context.imageSmoothingEnabled = false;
-        context.clearRect(rx, ry, rw, rh);
-        context.drawImage(baseCanvas, rx, ry, rw, rh, rx, ry, rw, rh);
-        context.drawImage(tmpCanvas, 0, 0, smallW, smallH, rx, ry, rw, rh);
-        context.restore();
+      if (mosaicCanvas.width !== smallW || mosaicCanvas.height !== smallH) {
+        mosaicCanvas.width = smallW;
+        mosaicCanvas.height = smallH;
+      } else {
+        mosaicContext.clearRect(0, 0, smallW, smallH);
       }
+
+      // Downscale
+      mosaicContext.imageSmoothingEnabled = true;
+      mosaicContext.drawImage(context.canvas, rx, ry, rw, rh, 0, 0, smallW, smallH);
+
+      // Upscale with nearest-neighbor (pixelated)
+      context.save();
+      context.imageSmoothingEnabled = false;
+      context.clearRect(rx, ry, rw, rh);
+      context.drawImage(baseCanvas, rx, ry, rw, rh, rx, ry, rw, rh);
+      context.drawImage(mosaicCanvas, 0, 0, smallW, smallH, rx, ry, rw, rh);
+      context.restore();
     }
   }
 

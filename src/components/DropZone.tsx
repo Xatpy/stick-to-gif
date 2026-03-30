@@ -58,7 +58,12 @@ export function DropZone({ onFileSelected, onPasteUrl, onError }: DropZoneProps)
       }}
     >
       <div className="drop-zone__content">
-        <span className="drop-zone__icon">📁</span>
+        <span className="drop-zone__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M12 16.5a1 1 0 0 1-1-1V8.91l-2.3 2.29a1 1 0 1 1-1.4-1.42l4-4a1 1 0 0 1 1.4 0l4 4a1 1 0 0 1-1.4 1.42L13 8.9v6.6a1 1 0 0 1-1 1Z" />
+            <path d="M6 18a1 1 0 0 1 0-2h12a1 1 0 1 1 0 2H6Z" />
+          </svg>
+        </span>
         <p className="drop-zone__label">Drop a GIF or MP4 here</p>
         <p className="drop-zone__hint">or tap to choose from your files</p>
       </div>

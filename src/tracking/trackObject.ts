@@ -157,6 +157,67 @@ function estimateMotion(
   };
 }
 
+function estimateTemplateMotion(
+  cv: CvModule,
+  previousGray: InstanceType<CvModule['Mat']>,
+  currentGray: InstanceType<CvModule['Mat']>,
+  region: TrackedRegion,
+): MotionEstimate | null {
+  const templateRect = clampRectToBounds(region, previousGray.cols, previousGray.rows);
+  const templateX = Math.round(templateRect.x);
+  const templateY = Math.round(templateRect.y);
+  const templateWidth = Math.round(templateRect.width);
+  const templateHeight = Math.round(templateRect.height);
+
+  if (templateWidth < 12 || templateHeight < 12) {
+    return null;
+  }
+
+  const searchPadding = Math.max(18, Math.round(Math.max(templateWidth, templateHeight) * 1.2));
+  const searchRect = clampRectToBounds(
+    {
+      x: templateRect.x - searchPadding,
+      y: templateRect.y - searchPadding,
+      width: templateRect.width + searchPadding * 2,
+      height: templateRect.height + searchPadding * 2,
+    },
+    currentGray.cols,
+    currentGray.rows,
+  );
+
+  const searchX = Math.round(searchRect.x);
+  const searchY = Math.round(searchRect.y);
+  const searchWidth = Math.round(searchRect.width);
+  const searchHeight = Math.round(searchRect.height);
+
+  if (searchWidth < templateWidth || searchHeight < templateHeight) {
+    return null;
+  }
+
+  const template = previousGray.roi(new cv.Rect(templateX, templateY, templateWidth, templateHeight));
+  const search = currentGray.roi(new cv.Rect(searchX, searchY, searchWidth, searchHeight));
+  const result = new cv.Mat();
+
+  try {
+    cv.matchTemplate(search, template, result, cv.TM_CCOEFF_NORMED);
+    const { maxVal, maxLoc } = (cv as unknown as {
+      minMaxLoc: (source: unknown) => { maxVal: number; maxLoc: { x: number; y: number } };
+    }).minMaxLoc(result);
+
+    return {
+      dx: searchX + maxLoc.x - templateX,
+      dy: searchY + maxLoc.y - templateY,
+      scale: 1,
+      rotation: 0,
+      confidence: clamp((maxVal - 0.35) / 0.65, 0, 1),
+    };
+  } finally {
+    template.delete();
+    search.delete();
+    result.delete();
+  }
+}
+
 export function computeOverlayLayout(
   region: Rect,
   overlay: OverlayTransform,
@@ -283,6 +344,7 @@ export async function trackObject({
     let nextRegion = previousRegion;
     let nextImageOverlay = previousImageOverlay;
     let nextTextOverlay = previousTextOverlay;
+    const templateMotion = estimateTemplateMotion(cv, previousGray, currentGray, previousRegion);
 
     if (featurePoints.rows >= 6) {
       const nextPoints = new cv.Mat();
@@ -339,16 +401,17 @@ export async function trackObject({
 
       if (trackedCurrent.length >= 4) {
         const motion = estimateMotion(trackedPrevious, trackedCurrent);
-        confidence = motion.confidence;
+        const templateConfidence = templateMotion?.confidence ?? 0;
+        confidence = Math.max(motion.confidence, templateConfidence * 0.9);
         if (index === 1 || index % 10 === 0 || index === gif.frames.length - 1) {
           emitDebug(
             debugReporter,
             'info',
-            `Frame ${index + 1}: ${trackedCurrent.length} points survived, confidence=${motion.confidence.toFixed(2)}, dx=${motion.dx.toFixed(1)}, dy=${motion.dy.toFixed(1)}.`,
+            `Frame ${index + 1}: ${trackedCurrent.length} points survived, flow=${motion.confidence.toFixed(2)}, template=${templateConfidence.toFixed(2)}, dx=${motion.dx.toFixed(1)}, dy=${motion.dy.toFixed(1)}.`,
           );
         }
 
-        const candidateRegion: TrackedRegion = clampRectToBounds(
+        let candidateRegion: TrackedRegion = clampRectToBounds(
           {
             x: previousRegion.x + motion.dx,
             y: previousRegion.y + motion.dy,
@@ -360,7 +423,32 @@ export async function trackObject({
         ) as TrackedRegion;
         candidateRegion.rotation = previousRegion.rotation + motion.rotation;
 
-        const positionAlpha = clamp(0.18 + confidence * 0.45, 0.18, 0.68);
+        if (templateMotion && templateMotion.confidence > 0.2) {
+          const templateRegion: TrackedRegion = {
+            ...clampRectToBounds(
+              {
+                x: previousRegion.x + templateMotion.dx,
+                y: previousRegion.y + templateMotion.dy,
+                width: previousRegion.width,
+                height: previousRegion.height,
+              },
+              gif.width,
+              gif.height,
+            ),
+            rotation: previousRegion.rotation,
+          };
+          const templateBlend = clamp(
+            templateMotion.confidence > motion.confidence
+              ? 0.45 + (templateMotion.confidence - motion.confidence) * 0.45
+              : templateMotion.confidence * 0.25,
+            0,
+            0.85,
+          );
+          candidateRegion = blendRegion(candidateRegion, templateRegion, templateBlend, 0);
+        }
+
+        const positionAlpha =
+          confidence > 0.78 ? 1 : clamp(0.35 + confidence * 0.45, 0.35, 0.88);
         const rotationAlpha =
           confidence > 0.45 && trackedCurrent.length >= 8 ? positionAlpha * 0.6 : 0;
 
@@ -398,13 +486,35 @@ export async function trackObject({
           );
         }
       } else {
-        confidence = trackedCurrent.length / Math.max(previousPointList.length, 1);
+        const templateConfidence = templateMotion?.confidence ?? 0;
+        confidence = Math.max(
+          trackedCurrent.length / Math.max(previousPointList.length, 1),
+          templateConfidence,
+        );
         emitDebug(
           debugReporter,
           'warn',
-          `Frame ${index + 1}: only ${trackedCurrent.length} points survived. Falling back toward stable region.`,
+          `Frame ${index + 1}: only ${trackedCurrent.length} points survived. Falling back to template/stable region.`,
         );
-        nextRegion = blendRegion(previousRegion, stableRegion, 0.2, 0);
+        if (templateMotion && templateMotion.confidence > 0.25) {
+          const templateRegion: TrackedRegion = {
+            ...clampRectToBounds(
+              {
+                x: previousRegion.x + templateMotion.dx,
+                y: previousRegion.y + templateMotion.dy,
+                width: previousRegion.width,
+                height: previousRegion.height,
+              },
+              gif.width,
+              gif.height,
+            ),
+            rotation: previousRegion.rotation,
+          };
+          nextRegion = blendRegion(previousRegion, templateRegion, clamp(0.55 + templateMotion.confidence * 0.35, 0.55, 1), 0);
+          stableRegion = blendRegion(stableRegion, nextRegion, 0.35, 0);
+        } else {
+          nextRegion = blendRegion(previousRegion, stableRegion, 0.2, 0);
+        }
         if (imageRelativeLayout) {
           nextImageOverlay = blendOverlay(
             previousImageOverlay,
@@ -426,12 +536,32 @@ export async function trackObject({
       status.delete();
       error.delete();
     } else {
+      const templateConfidence = templateMotion?.confidence ?? 0;
       emitDebug(
         debugReporter,
         'warn',
         `Frame ${index + 1}: not enough tracked points to run optical flow (${featurePoints.rows}).`,
       );
-      nextRegion = stableRegion;
+      confidence = templateConfidence;
+      if (templateMotion && templateMotion.confidence > 0.25) {
+        const templateRegion: TrackedRegion = {
+          ...clampRectToBounds(
+            {
+              x: previousRegion.x + templateMotion.dx,
+              y: previousRegion.y + templateMotion.dy,
+              width: previousRegion.width,
+              height: previousRegion.height,
+            },
+            gif.width,
+            gif.height,
+          ),
+          rotation: previousRegion.rotation,
+        };
+        nextRegion = blendRegion(previousRegion, templateRegion, clamp(0.55 + templateMotion.confidence * 0.35, 0.55, 1), 0);
+        stableRegion = blendRegion(stableRegion, nextRegion, 0.35, 0);
+      } else {
+        nextRegion = stableRegion;
+      }
       nextImageOverlay = imageRelativeLayout
         ? buildOverlayFromRegion(nextRegion, imageRelativeLayout, false)
         : null;

@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { DropZone } from './components/DropZone';
 import { EditorCanvas } from './components/EditorCanvas';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { Modal } from './components/Modal';
 import { OverlayPicker } from './components/OverlayPicker';
 import { PreviewPlayer } from './components/PreviewPlayer';
 import { exportGif } from './gif/exportGif';
 import { decodeSource } from './media/decodeSource';
-import { exportAnimatedWebp } from './webp/exportWebp';
+import { canEncodeWebp, exportAnimatedWebp } from './webp/exportWebp';
 import { trackObject } from './tracking/trackObject';
 import { computeOverlayFrames } from './tracking/computeOverlays';
 import logoAsset from './assets/logo.png';
@@ -112,6 +113,16 @@ async function loadRemoteFile(url: string) {
   return new File([blob], pathname, { type: blob.type });
 }
 
+async function loadBundledSample() {
+  const response = await fetch(`${import.meta.env.BASE_URL}sample.gif`);
+  if (!response.ok) {
+    throw new Error('Unable to load the sample clip.');
+  }
+
+  const blob = await response.blob();
+  return new File([blob], 'sample.gif', { type: blob.type || 'image/gif' });
+}
+
 /* ── App ────────────────────────────────────────────────────── */
 
 export default function App() {
@@ -129,11 +140,32 @@ export default function App() {
   const [status, setStatus] = useState<StatusState>(idleStatus);
   const [error, setError] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false);
+  const [webpSupported, setWebpSupported] = useState<boolean | null>(null);
   const [, setDebugLog] = useState<DebugEntry[]>([]);
 
   useEffect(() => {
     return () => { if (overlay?.objectUrl) URL.revokeObjectURL(overlay.objectUrl); };
   }, [overlay]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void canEncodeWebp()
+      .then((supported) => {
+        if (!cancelled) {
+          setWebpSupported(supported);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setWebpSupported(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const firstFrame = gif?.frames[0]?.imageData ?? null;
   const isExporting = status.stage === 'exporting';
@@ -212,6 +244,16 @@ export default function App() {
     setTargetRect(getDefaultTargetRect(gif, point));
   };
 
+  const handleSampleLoad = async () => {
+    try {
+      setError(null);
+      const file = await loadBundledSample();
+      await handleGifUpload(file);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to load the sample clip.');
+    }
+  };
+
   const handleTrack = async () => {
     if (!gif || !targetRect) return;
 
@@ -280,6 +322,10 @@ export default function App() {
 
   const handleExport = async (format: 'gif' | 'webp') => {
     if (!gif || !composedFrames) return;
+    if (format === 'webp' && webpSupported === false) {
+      setError('WebP export is not supported in this browser. Export GIF instead.');
+      return;
+    }
 
     try {
       setError(null);
@@ -325,6 +371,7 @@ export default function App() {
               onPasteUrl={handlePasteUrl}
               onError={setError}
             />
+            <p className="step-hint">Everything runs locally in your browser. Nothing is uploaded.</p>
           </div>
         );
 
@@ -417,9 +464,10 @@ export default function App() {
                 type="button"
                 className="button button--secondary button--full"
                 onClick={() => handleExport('webp')}
-                disabled={isBusy}
+                disabled={isBusy || webpSupported === false}
+                title={webpSupported === false ? 'WebP export is unavailable in this browser.' : undefined}
               >
-                Export WebP
+                {webpSupported === false ? 'WebP Unavailable' : 'Export WebP'}
               </button>
             </div>
             <button type="button" className="start-over-link" onClick={resetAll} disabled={isBusy}>
@@ -437,8 +485,13 @@ export default function App() {
     if (step === 'input') {
       return (
         <div className="empty-canvas">
-          <h1>Pin something to a moving subject — locally, in seconds.</h1>
-          <p>Drop a GIF or MP4 above or tap to choose from your files.</p>
+          <h1>Pin anything to a moving subject. Runs entirely in your browser.</h1>
+          <p>Your GIFs never leave your device.</p>
+          <div className="empty-canvas__actions">
+            <button type="button" className="button" onClick={() => void handleSampleLoad()} disabled={isBusy}>
+              Try The Sample Clip
+            </button>
+          </div>
         </div>
       );
     }
@@ -543,7 +596,9 @@ export default function App() {
 
         {/* Main area */}
         <div className="main-area">
-          {renderCanvas()}
+          <ErrorBoundary onReset={resetAll}>
+            {renderCanvas()}
+          </ErrorBoundary>
         </div>
       </div>
 

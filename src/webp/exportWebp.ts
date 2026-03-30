@@ -19,6 +19,7 @@ interface EncodedWebpFrame {
 }
 
 const textEncoder = new TextEncoder();
+const textDecoder = new TextDecoder();
 
 function createChunk(type: string, payload: Uint8Array) {
   const paddedLength = payload.length + (payload.length % 2);
@@ -52,8 +53,8 @@ function writeUint24(target: Uint8Array, offset: number, value: number) {
 }
 
 function parseWebpFrameChunks(bytes: Uint8Array) {
-  const riff = new TextDecoder().decode(bytes.subarray(0, 4));
-  const webp = new TextDecoder().decode(bytes.subarray(8, 12));
+  const riff = textDecoder.decode(bytes.subarray(0, 4));
+  const webp = textDecoder.decode(bytes.subarray(8, 12));
 
   if (riff !== 'RIFF' || webp !== 'WEBP') {
     throw new Error('Canvas did not produce a valid WebP frame.');
@@ -63,7 +64,7 @@ function parseWebpFrameChunks(bytes: Uint8Array) {
   let offset = 12;
 
   while (offset + 8 <= bytes.length) {
-    const type = new TextDecoder().decode(bytes.subarray(offset, offset + 4));
+    const type = textDecoder.decode(bytes.subarray(offset, offset + 4));
     const size = new DataView(
       bytes.buffer,
       bytes.byteOffset + offset + 4,
@@ -93,6 +94,32 @@ function parseWebpFrameChunks(bytes: Uint8Array) {
   }
 
   return result;
+}
+
+export async function canEncodeWebp() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1;
+  canvas.height = 1;
+  const context = canvas.getContext('2d');
+
+  if (!context || typeof canvas.toBlob !== 'function') {
+    return false;
+  }
+
+  context.fillStyle = '#000';
+  context.fillRect(0, 0, 1, 1);
+
+  const blob = await new Promise<Blob | null>((resolve) => {
+    canvas.toBlob((nextBlob) => resolve(nextBlob), 'image/webp', 0.9);
+  });
+
+  if (!blob || blob.type !== 'image/webp') {
+    return false;
+  }
+
+  const header = new Uint8Array(await blob.slice(0, 12).arrayBuffer());
+  return textDecoder.decode(header.subarray(0, 4)) === 'RIFF'
+    && textDecoder.decode(header.subarray(8, 12)) === 'WEBP';
 }
 
 function hasTransparentPixels(rgba: Uint8ClampedArray) {
@@ -177,6 +204,10 @@ export async function exportAnimatedWebp({
 
   if (!context) {
     throw new Error('Unable to create a WebP export canvas.');
+  }
+
+  if (!(await canEncodeWebp())) {
+    throw new Error('WebP export is not supported in this browser. Export GIF instead.');
   }
 
   const frames: EncodedWebpFrame[] = [];

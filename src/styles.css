@@ -144,9 +144,15 @@ button, input, textarea, select { font: inherit; }
 }
 
 .drop-zone__icon {
-  font-size: 2.2rem;
   display: block;
   margin-bottom: 8px;
+  color: var(--primary-strong);
+}
+
+.drop-zone__icon svg {
+  width: 40px;
+  height: 40px;
+  fill: currentColor;
 }
 
 .drop-zone__label {
@@ -321,6 +327,35 @@ button, input, textarea, select { font: inherit; }
   margin: 12px 0 0;
   color: var(--text-muted);
   max-width: 34ch;
+}
+
+.empty-canvas__actions {
+  margin-top: 20px;
+}
+
+.error-boundary {
+  flex: 1 1 0;
+  min-height: 420px;
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  text-align: center;
+  border-radius: 14px;
+  border: 2px solid rgba(99, 88, 79, 0.14);
+  background: linear-gradient(180deg, #f7f3ed 0%, #efe8de 100%);
+  padding: 24px;
+}
+
+.error-boundary__title {
+  margin: 0;
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
+.error-boundary__message {
+  margin: 0;
+  max-width: 36ch;
+  color: var(--text-muted);
 }
 
 /* ── Playback bar ─────────────────────────────────────────── */
