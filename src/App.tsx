@@ -4,8 +4,8 @@ import { EditorCanvas } from './components/EditorCanvas';
 import { Modal } from './components/Modal';
 import { OverlayPicker } from './components/OverlayPicker';
 import { PreviewPlayer } from './components/PreviewPlayer';
-import { decodeGif } from './gif/decodeGif';
 import { exportGif } from './gif/exportGif';
+import { decodeSource } from './media/decodeSource';
 import { exportAnimatedWebp } from './webp/exportWebp';
 import { trackObject } from './tracking/trackObject';
 import { computeOverlayFrames } from './tracking/computeOverlays';
@@ -180,8 +180,10 @@ export default function App() {
     try {
       setError(null);
       setDebugLog([]);
-      setStatus({ stage: 'decoding', message: 'Decoding GIF frames', progress: 0.15 });
-      const decoded = await decodeGif(file);
+      setStatus({ stage: 'decoding', message: 'Loading source media', progress: 0.1 });
+      const decoded = await decodeSource(file, {
+        onProgress: (update) => setStatus({ stage: 'decoding', message: update.message, progress: update.progress }),
+      });
       setGif(decoded);
       setTargetRect(null);
       setTrackingFrames(null);
@@ -191,7 +193,7 @@ export default function App() {
       setStatus(idleStatus);
       setStep('pick-subject');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to load that GIF.');
+      setError(e instanceof Error ? e.message : 'Unable to load that file.');
       setStatus(idleStatus);
     }
   };
@@ -301,7 +303,7 @@ export default function App() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${gif.name.replace(/\.gif$/i, '')}-sticktogif.${format}`;
+      link.download = `${gif.name.replace(/\.[^.]+$/i, '') || 'sticktogif'}-sticktogif.${format}`;
       link.click();
       URL.revokeObjectURL(url);
       setStatus(idleStatus);
@@ -436,7 +438,7 @@ export default function App() {
       return (
         <div className="empty-canvas">
           <h1>Pin something to a moving subject — locally, in seconds.</h1>
-          <p>Drop a GIF above or tap to choose from your files.</p>
+          <p>Drop a GIF or MP4 above or tap to choose from your files.</p>
         </div>
       );
     }
@@ -548,9 +550,9 @@ export default function App() {
       {/* Help Modal */}
       <Modal isOpen={showHelp} onClose={() => setShowHelp(false)} title="How to use StickToGif">
         <div className="prose">
-          <p><strong>StickToGif</strong> is a fast, local tool to pin an image, text, or a blur effect onto a moving object inside a GIF.</p>
+          <p><strong>StickToGif</strong> is a fast, local tool to pin an image, text, or a blur effect onto a moving object inside a short animation.</p>
           <ol>
-            <li><strong>Input:</strong> Drop a GIF or paste a URL to get started.</li>
+            <li><strong>Input:</strong> Drop a GIF or MP4, or paste a GIF URL to get started.</li>
             <li><strong>Pick Subject:</strong> Tap or click on the object you want to track. A tracking box will appear. Drag its corners to resize it exactly around the subject.</li>
             <li><strong>Track:</strong> Hit Track. The engine runs locally in your browser to follow the object frame-by-frame.</li>
             <li><strong>Overlay:</strong> Choose between a Sticker, Text, or Blur effect. The app instantly attaches it to the tracked motion.</li>

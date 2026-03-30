@@ -95,7 +95,10 @@ export async function decodeGif(file: File): Promise<DecodedGif> {
     name: file.name,
     width,
     height,
+    sourceKind: 'gif',
     loopCount,
+    durationMs: frames.reduce((total, frame) => total + frame.delay, 0),
+    frameRate: undefined,
     frames,
   };
 }

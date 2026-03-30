@@ -18,7 +18,10 @@ export interface DecodedGif {
   name: string;
   width: number;
   height: number;
+  sourceKind: 'gif' | 'video';
   loopCount: number;
+  durationMs: number;
+  frameRate?: number;
   frames: GifFrame[];
 }
 

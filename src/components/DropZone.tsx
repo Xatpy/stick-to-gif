@@ -8,14 +8,17 @@ interface DropZoneProps {
 
 export function DropZone({ onFileSelected, onPasteUrl, onError }: DropZoneProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const accept = 'image/gif';
+  const accept = 'image/gif,video/mp4';
 
   const handleFiles = (files: FileList | null) => {
     const file = files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/gif')) {
-      onError?.('Please select an animated GIF file.');
+    const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
+    const isMp4 = file.type === 'video/mp4' || file.name.toLowerCase().endsWith('.mp4');
+
+    if (!isGif && !isMp4) {
+      onError?.('Please select an animated GIF or MP4 file.');
       return;
     }
     onFileSelected(file);
@@ -56,7 +59,7 @@ export function DropZone({ onFileSelected, onPasteUrl, onError }: DropZoneProps)
     >
       <div className="drop-zone__content">
         <span className="drop-zone__icon">📁</span>
-        <p className="drop-zone__label">Drop a GIF here</p>
+        <p className="drop-zone__label">Drop a GIF or MP4 here</p>
         <p className="drop-zone__hint">or tap to choose from your files</p>
       </div>
       {onPasteUrl && (
