@@ -6,6 +6,7 @@ import type {
   OverlayTransform,
   ProgressUpdate,
   Rect,
+  TextOverlayStyle,
   TrackingFrame,
   TrackedRegion,
 } from '../types';
@@ -22,7 +23,9 @@ import {
 interface TrackOptions {
   gif: DecodedGif;
   initialRegion: Rect;
-  initialOverlay: OverlayTransform;
+  initialImageOverlay?: OverlayTransform | null;
+  initialTextOverlay?: OverlayTransform | null;
+  textStyle?: TextOverlayStyle | null;
   onProgress?: (update: ProgressUpdate) => void;
   debugReporter?: DebugReporter;
 }
@@ -154,7 +157,7 @@ function estimateMotion(
   };
 }
 
-function computeOverlayLayout(
+export function computeOverlayLayout(
   region: Rect,
   overlay: OverlayTransform,
 ): RelativeOverlayLayout {
@@ -168,7 +171,7 @@ function computeOverlayLayout(
   };
 }
 
-function buildOverlayFromRegion(
+export function buildOverlayFromRegion(
   region: TrackedRegion,
   relativeLayout: RelativeOverlayLayout,
   rotationEnabled: boolean,
@@ -195,7 +198,9 @@ function buildOverlayFromRegion(
 export async function trackObject({
   gif,
   initialRegion,
-  initialOverlay,
+  initialImageOverlay,
+  initialTextOverlay,
+  textStyle,
   onProgress,
   debugReporter,
 }: TrackOptions): Promise<TrackingFrame[]> {
@@ -213,7 +218,13 @@ export async function trackObject({
   emitDebug(debugReporter, 'info', 'OpenCV handoff complete. Starting frame preparation.');
   const region = clampRectToBounds(initialRegion, gif.width, gif.height);
   const baselineRegion: TrackedRegion = { ...region, rotation: 0 };
-  const relativeLayout = computeOverlayLayout(region, initialOverlay);
+  const imageRelativeLayout = initialImageOverlay
+    ? computeOverlayLayout(region, initialImageOverlay)
+    : null;
+  const textRelativeLayout =
+    initialTextOverlay && textStyle?.enabled && textStyle.text.trim()
+      ? computeOverlayLayout(region, initialTextOverlay)
+      : null;
   emitDebug(
     debugReporter,
     'info',
@@ -225,7 +236,8 @@ export async function trackObject({
       frameIndex: 0,
       confidence: 1,
       region: baselineRegion,
-      overlay: initialOverlay,
+      imageOverlay: initialImageOverlay ?? null,
+      textOverlay: textRelativeLayout ? initialTextOverlay ?? null : null,
     },
   ];
 
@@ -235,7 +247,8 @@ export async function trackObject({
   });
   let previousGray = imageDataToGray(cv, gif.frames[0]!.imageData);
   let previousRegion = baselineRegion;
-  let previousOverlay = initialOverlay;
+  let previousImageOverlay = initialImageOverlay ?? null;
+  let previousTextOverlay = textRelativeLayout ? initialTextOverlay ?? null : null;
   let stableRegion = baselineRegion;
   let featurePoints = detectFeaturePoints(cv, previousGray, baselineRegion);
   emitDebug(
@@ -268,7 +281,8 @@ export async function trackObject({
     const currentGray = imageDataToGray(cv, gif.frames[index]!.imageData);
     let confidence = 0;
     let nextRegion = previousRegion;
-    let nextOverlay = previousOverlay;
+    let nextImageOverlay = previousImageOverlay;
+    let nextTextOverlay = previousTextOverlay;
 
     if (featurePoints.rows >= 6) {
       const nextPoints = new cv.Mat();
@@ -358,8 +372,31 @@ export async function trackObject({
           stableRegion = nextRegion;
         }
 
-        nextOverlay = buildOverlayFromRegion(nextRegion, relativeLayout, rotationAlpha > 0);
-        nextOverlay = blendOverlay(previousOverlay, nextOverlay, positionAlpha);
+        if (imageRelativeLayout) {
+          nextImageOverlay = buildOverlayFromRegion(
+            nextRegion,
+            imageRelativeLayout,
+            rotationAlpha > 0,
+          );
+          nextImageOverlay = blendOverlay(
+            previousImageOverlay,
+            nextImageOverlay,
+            positionAlpha,
+          );
+        }
+
+        if (textRelativeLayout) {
+          nextTextOverlay = buildOverlayFromRegion(
+            nextRegion,
+            textRelativeLayout,
+            rotationAlpha > 0,
+          );
+          nextTextOverlay = blendOverlay(
+            previousTextOverlay,
+            nextTextOverlay,
+            positionAlpha,
+          );
+        }
       } else {
         confidence = trackedCurrent.length / Math.max(previousPointList.length, 1);
         emitDebug(
@@ -368,11 +405,21 @@ export async function trackObject({
           `Frame ${index + 1}: only ${trackedCurrent.length} points survived. Falling back toward stable region.`,
         );
         nextRegion = blendRegion(previousRegion, stableRegion, 0.2, 0);
-        nextOverlay = blendOverlay(
-          previousOverlay,
-          buildOverlayFromRegion(nextRegion, relativeLayout, false),
-          0.2,
-        );
+        if (imageRelativeLayout) {
+          nextImageOverlay = blendOverlay(
+            previousImageOverlay,
+            buildOverlayFromRegion(nextRegion, imageRelativeLayout, false),
+            0.2,
+          );
+        }
+
+        if (textRelativeLayout) {
+          nextTextOverlay = blendOverlay(
+            previousTextOverlay,
+            buildOverlayFromRegion(nextRegion, textRelativeLayout, false),
+            0.2,
+          );
+        }
       }
 
       nextPoints.delete();
@@ -385,7 +432,12 @@ export async function trackObject({
         `Frame ${index + 1}: not enough tracked points to run optical flow (${featurePoints.rows}).`,
       );
       nextRegion = stableRegion;
-      nextOverlay = buildOverlayFromRegion(nextRegion, relativeLayout, false);
+      nextImageOverlay = imageRelativeLayout
+        ? buildOverlayFromRegion(nextRegion, imageRelativeLayout, false)
+        : null;
+      nextTextOverlay = textRelativeLayout
+        ? buildOverlayFromRegion(nextRegion, textRelativeLayout, false)
+        : null;
     }
 
     previousGray.delete();
@@ -393,14 +445,16 @@ export async function trackObject({
 
     previousGray = currentGray;
     previousRegion = nextRegion;
-    previousOverlay = nextOverlay;
+    previousImageOverlay = nextImageOverlay;
+    previousTextOverlay = nextTextOverlay;
     featurePoints = detectFeaturePoints(cv, currentGray, nextRegion);
 
     results.push({
       frameIndex: index,
       confidence,
       region: nextRegion,
-      overlay: nextOverlay,
+      imageOverlay: nextImageOverlay,
+      textOverlay: nextTextOverlay,
     });
 
     if (index % 3 === 0) {

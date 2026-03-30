@@ -1,59 +1,49 @@
 import { useEffect } from 'react';
-import type { ReactNode } from 'react';
 
 interface ModalProps {
-  title: string;
-  open: boolean;
+  isOpen: boolean;
   onClose: () => void;
-  children: ReactNode;
+  title: string;
+  children: React.ReactNode;
 }
 
-export function Modal({ title, open, onClose, children }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children }: ModalProps) {
   useEffect(() => {
-    if (!open) {
-      return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
     }
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isOpen, onClose]);
 
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', onKeyDown);
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener('keydown', onKeyDown);
-    };
-  }, [open, onClose]);
-
-  if (!open) {
-    return null;
-  }
+  if (!isOpen) return null;
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="presentation">
+    <div className="modal-backdrop" onClick={onClose}>
       <div
         className="modal"
+        onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label={title}
-        onClick={(event) => event.stopPropagation()}
+        aria-labelledby="modal-title"
       >
         <div className="modal__header">
-          <h2>{title}</h2>
+          <h2 id="modal-title">{title}</h2>
           <button
             type="button"
-            className="button button--secondary"
+            className="playback-bar__btn"
             onClick={onClose}
+            aria-label="Close"
+            style={{ width: 36, height: 36 }}
           >
-            Close
+            ✕
           </button>
         </div>
-        <div className="modal__content">{children}</div>
+        <div className="modal__content">
+          {children}
+        </div>
       </div>
     </div>
   );

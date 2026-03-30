@@ -1,37 +1,56 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { DropZone } from './components/DropZone';
 import { EditorCanvas } from './components/EditorCanvas';
 import { Modal } from './components/Modal';
+import { OverlayPicker } from './components/OverlayPicker';
 import { PreviewPlayer } from './components/PreviewPlayer';
-import { StatusBanner } from './components/StatusBanner';
-import { UploadCard } from './components/UploadCard';
 import { decodeGif } from './gif/decodeGif';
 import { exportGif } from './gif/exportGif';
 import { exportAnimatedWebp } from './webp/exportWebp';
 import { trackObject } from './tracking/trackObject';
+import { computeOverlayFrames } from './tracking/computeOverlays';
+import logoAsset from './assets/logo.png';
 import type { DebugEntry } from './lib/debug';
 import type {
+  AppStep,
+  BlurStyle,
   DecodedGif,
   OverlayAsset,
+  OverlayMode,
   OverlayTransform,
+  Point,
   Rect,
   StatusState,
+  TextOverlayStyle,
   TrackingFrame,
 } from './types';
-import { clampRectToBounds, rectCenter, round } from './utils/math';
+import { clampRectToBounds, rectCenter } from './utils/math';
+import { truncateFilename } from './utils/truncate';
 
-const idleStatus: StatusState = {
-  stage: 'idle',
-  message: '',
-  progress: 0,
+/* ── Constants ──────────────────────────────────────────────── */
+
+const idleStatus: StatusState = { stage: 'idle', message: '', progress: 0 };
+
+const defaultTextStyle: TextOverlayStyle = {
+  enabled: false,
+  text: '',
+  color: '#ffffff',
+  strokeColor: '#2b2118',
+  fontFamily: '"Avenir Next", "Segoe UI", sans-serif',
+  fontWeight: 800,
 };
 
-function getDefaultTargetRect(gif: DecodedGif): Rect {
-  return {
-    x: gif.width * 0.3,
-    y: gif.height * 0.3,
-    width: gif.width * 0.2,
-    height: gif.height * 0.2,
-  };
+const defaultBlurStyle: BlurStyle = { intensity: 0.5 };
+
+/* ── Helpers ────────────────────────────────────────────────── */
+
+function getDefaultTargetRect(gif: DecodedGif, center: Point): Rect {
+  const size = Math.min(gif.width, gif.height) * 0.2;
+  return clampRectToBounds(
+    { x: center.x - size / 2, y: center.y - size / 2, width: size, height: size },
+    gif.width,
+    gif.height,
+  );
 }
 
 function getDefaultOverlayTransform(
@@ -41,31 +60,32 @@ function getDefaultOverlayTransform(
 ): OverlayTransform {
   const maxWidth = gif.width * 0.32;
   const scale = Math.min(1, maxWidth / overlay.width);
-  const width = overlay.width * scale;
-  const height = overlay.height * scale;
-  const targetCenter = rectCenter(targetRect);
-
+  const center = rectCenter(targetRect);
   return {
-    x: targetCenter.x,
-    y: targetCenter.y,
-    width,
-    height,
+    x: center.x,
+    y: center.y,
+    width: overlay.width * scale,
+    height: overlay.height * scale,
+    rotation: 0,
+  };
+}
+
+function getDefaultTextTransform(gif: DecodedGif, targetRect: Rect): OverlayTransform {
+  const center = rectCenter(targetRect);
+  return {
+    x: center.x,
+    y: Math.max(36, targetRect.y - 28),
+    width: Math.min(gif.width * 0.6, 320),
+    height: Math.max(36, gif.height * 0.12),
     rotation: 0,
   };
 }
 
 async function loadOverlay(file: File): Promise<OverlayAsset> {
   const objectUrl = URL.createObjectURL(file);
-
   try {
     const bitmap = await createImageBitmap(file);
-    return {
-      name: file.name,
-      width: bitmap.width,
-      height: bitmap.height,
-      source: bitmap,
-      objectUrl,
-    };
+    return { name: file.name, width: bitmap.width, height: bitmap.height, source: bitmap, objectUrl };
   } catch {
     const image = await new Promise<HTMLImageElement>((resolve, reject) => {
       const next = new Image();
@@ -73,468 +93,468 @@ async function loadOverlay(file: File): Promise<OverlayAsset> {
       next.onerror = () => reject(new Error('Unable to decode that overlay image.'));
       next.src = objectUrl;
     });
-
-    return {
-      name: file.name,
-      width: image.naturalWidth,
-      height: image.naturalHeight,
-      source: image,
-      objectUrl,
-    };
+    return { name: file.name, width: image.naturalWidth, height: image.naturalHeight, source: image, objectUrl };
   }
 }
 
-async function loadRemoteFile(url: string, expectedMimePrefix: string, fallbackName: string) {
+async function loadRemoteFile(url: string) {
   let parsedUrl: URL;
-  try {
-    parsedUrl = new URL(url);
-  } catch {
-    throw new Error('That pasted text is not a valid URL.');
-  }
+  try { parsedUrl = new URL(url); } catch { throw new Error('Invalid URL.'); }
 
   const response = await fetch(parsedUrl.toString(), { mode: 'cors' });
-  if (!response.ok) {
-    throw new Error('Unable to fetch that URL from the browser.');
-  }
+  if (!response.ok) throw new Error('Unable to fetch that URL.');
 
   const blob = await response.blob();
-  if (!blob.type.startsWith(expectedMimePrefix)) {
-    throw new Error(
-      `That URL did not return a supported ${expectedMimePrefix.replace('/', ' ')} file. Some hosts block direct browser fetches or return the wrong content type.`,
-    );
-  }
+  if (!blob.type.startsWith('image/gif'))
+    throw new Error('That URL did not return a GIF file.');
 
-  const pathname = parsedUrl.pathname.split('/').pop() || fallbackName;
+  const pathname = parsedUrl.pathname.split('/').pop() || 'pasted.gif';
   return new File([blob], pathname, { type: blob.type });
 }
 
+/* ── App ────────────────────────────────────────────────────── */
+
 export default function App() {
+  /* State */
+  const [step, setStep] = useState<AppStep>('input');
   const [gif, setGif] = useState<DecodedGif | null>(null);
-  const [overlay, setOverlay] = useState<OverlayAsset | null>(null);
-  const [overlayTransform, setOverlayTransform] = useState<OverlayTransform | null>(null);
   const [targetRect, setTargetRect] = useState<Rect | null>(null);
   const [trackingFrames, setTrackingFrames] = useState<TrackingFrame[] | null>(null);
+  const [overlayMode, setOverlayMode] = useState<OverlayMode | null>(null);
+  const [overlay, setOverlay] = useState<OverlayAsset | null>(null);
+  const [overlayTransform, setOverlayTransform] = useState<OverlayTransform | null>(null);
+  const [textStyle, setTextStyle] = useState<TextOverlayStyle>(defaultTextStyle);
+  const [textTransform, setTextTransform] = useState<OverlayTransform | null>(null);
+  const [blurStyle, setBlurStyle] = useState<BlurStyle>(defaultBlurStyle);
   const [status, setStatus] = useState<StatusState>(idleStatus);
   const [error, setError] = useState<string | null>(null);
-  const [debugLog, setDebugLog] = useState<DebugEntry[]>([]);
-  const [setupModalOpen, setSetupModalOpen] = useState(false);
-  const [guideModalOpen, setGuideModalOpen] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const [, setDebugLog] = useState<DebugEntry[]>([]);
 
   useEffect(() => {
-    return () => {
-      if (overlay?.objectUrl) {
-        URL.revokeObjectURL(overlay.objectUrl);
-      }
-    };
+    return () => { if (overlay?.objectUrl) URL.revokeObjectURL(overlay.objectUrl); };
   }, [overlay]);
 
   const firstFrame = gif?.frames[0]?.imageData ?? null;
-  const readyToTrack = Boolean(gif && overlay && overlayTransform && targetRect);
-  const setupStats = useMemo(() => {
-    if (!gif || !targetRect) {
-      return null;
-    }
+  const isExporting = status.stage === 'exporting';
+  const isBusy = status.stage !== 'idle';
 
-    return {
-      gifSize: `${gif.width}x${gif.height}`,
-      frameCount: gif.frames.length,
-      overlaySize: overlayTransform
-        ? `${Math.round(overlayTransform.width)}x${Math.round(overlayTransform.height)}`
-        : 'Upload overlay',
-      target: `${round(targetRect.x)}, ${round(targetRect.y)} / ${round(targetRect.width)} x ${round(targetRect.height)}`,
-    };
-  }, [gif, overlayTransform, targetRect]);
+  /* Derived: frames with overlay applied */
+  const composedFrames = (() => {
+    if (!trackingFrames || !gif || !targetRect) return null;
 
-  const resetState = () => {
-    if (overlay?.objectUrl) {
-      URL.revokeObjectURL(overlay.objectUrl);
+    if (overlayMode === 'sticker' && overlay && overlayTransform) {
+      return computeOverlayFrames(trackingFrames, targetRect, overlayTransform, 'imageOverlay');
     }
-    setGif(null);
-    setOverlay(null);
-    setOverlayTransform(null);
-    setTargetRect(null);
-    setTrackingFrames(null);
-    setStatus(idleStatus);
-    setError(null);
-    setDebugLog([]);
-  };
+    if (overlayMode === 'text' && textStyle.enabled && textStyle.text.trim() && textTransform) {
+      return computeOverlayFrames(trackingFrames, targetRect, textTransform, 'textOverlay');
+    }
+    // Blur mode or no overlay — use raw tracking frames
+    return trackingFrames;
+  })();
+
+  /* ── Actions ──────────────────────────────────────────── */
 
   const appendDebug = (entry: DebugEntry) => {
     setDebugLog((current) => [...current.slice(-199), entry]);
+  };
+
+  const resetAll = () => {
+    if (overlay?.objectUrl) URL.revokeObjectURL(overlay.objectUrl);
+    setStep('input');
+    setGif(null);
+    setTargetRect(null);
+    setTrackingFrames(null);
+    setOverlayMode(null);
+    setOverlay(null);
+    setOverlayTransform(null);
+    setTextStyle(defaultTextStyle);
+    setTextTransform(null);
+    setBlurStyle(defaultBlurStyle);
+    setStatus(idleStatus);
+    setError(null);
+    setDebugLog([]);
   };
 
   const handleGifUpload = async (file: File) => {
     try {
       setError(null);
       setDebugLog([]);
-      setStatus({
-        stage: 'decoding',
-        message: 'Decoding GIF frames in your browser',
-        progress: 0.15,
-      });
+      setStatus({ stage: 'decoding', message: 'Decoding GIF frames', progress: 0.15 });
       const decoded = await decodeGif(file);
-      const nextTargetRect = getDefaultTargetRect(decoded);
       setGif(decoded);
-      setTargetRect(nextTargetRect);
+      setTargetRect(null);
       setTrackingFrames(null);
-      setStatus(idleStatus);
-
-      if (overlay) {
-        setOverlayTransform(getDefaultOverlayTransform(decoded, overlay, nextTargetRect));
-      }
-    } catch (nextError) {
-      setError(
-        nextError instanceof Error
-          ? nextError.message
-          : 'Unable to load that GIF.',
-      );
-      setStatus(idleStatus);
-    }
-  };
-
-  const handleGifUrlPaste = async (url: string) => {
-    const file = await loadRemoteFile(url, 'image/gif', 'pasted.gif');
-    await handleGifUpload(file);
-  };
-
-  const handleOverlayUpload = async (file: File) => {
-    try {
-      setError(null);
-      setDebugLog([]);
-      const nextOverlay = await loadOverlay(file);
-
-      if (overlay?.objectUrl) {
-        URL.revokeObjectURL(overlay.objectUrl);
-      }
-
-      setOverlay(nextOverlay);
+      setOverlayMode(null);
+      setOverlay(null);
       setOverlayTransform(null);
-      setTrackingFrames(null);
-
-      if (gif) {
-        const rect = targetRect ?? getDefaultTargetRect(gif);
-        setTargetRect(rect);
-        setOverlayTransform(getDefaultOverlayTransform(gif, nextOverlay, rect));
-      }
-    } catch (nextError) {
-      setError(
-        nextError instanceof Error
-          ? nextError.message
-          : 'Unable to load that overlay image.',
-      );
+      setStatus(idleStatus);
+      setStep('pick-subject');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to load that GIF.');
+      setStatus(idleStatus);
     }
+  };
+
+  const handlePasteUrl = async (url: string) => {
+    try {
+      const file = await loadRemoteFile(url);
+      await handleGifUpload(file);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to fetch that URL.');
+    }
+  };
+
+  const handleTapPlace = (point: Point) => {
+    if (!gif) return;
+    setTargetRect(getDefaultTargetRect(gif, point));
   };
 
   const handleTrack = async () => {
-    if (!gif || !overlayTransform || !targetRect) {
-      return;
-    }
+    if (!gif || !targetRect) return;
 
     try {
       setError(null);
       setDebugLog([]);
-      setStatus({
-        stage: 'tracking',
-        message: 'Loading tracking engine',
-        progress: 0.02,
-      });
-      await new Promise<void>((resolve) => {
-        window.requestAnimationFrame(() => resolve());
-      });
+      setStep('tracking');
+      setStatus({ stage: 'tracking', message: 'Loading tracking engine', progress: 0.02 });
+      await new Promise<void>((r) => requestAnimationFrame(() => r()));
+
       const result = await trackObject({
         gif,
         initialRegion: targetRect,
-        initialOverlay: overlayTransform,
         debugReporter: appendDebug,
-        onProgress: (update) =>
-          setStatus({
-            stage: 'tracking',
-            message: update.message,
-            progress: update.progress,
-          }),
+        onProgress: (update) => setStatus({ stage: 'tracking', message: update.message, progress: update.progress }),
       });
+
       setTrackingFrames(result);
       setStatus(idleStatus);
-    } catch (nextError) {
-      setError(
-        nextError instanceof Error
-          ? nextError.message
-          : 'Tracking failed on this GIF.',
-      );
-      appendDebug({
-        timestamp: new Date().toLocaleTimeString(),
-        level: 'error',
-        message:
-          nextError instanceof Error ? nextError.stack ?? nextError.message : 'Unknown tracking error.',
-      });
+      setStep('overlay');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Tracking failed.');
+      appendDebug({ timestamp: new Date().toLocaleTimeString(), level: 'error', message: e instanceof Error ? e.stack ?? e.message : 'Unknown error' });
       setStatus(idleStatus);
+      setStep('pick-subject');
     }
   };
 
-  const handleExport = async (format: 'gif' | 'webp') => {
-    if (!gif || !overlay || !trackingFrames) {
-      return;
+  const handleModeChange = (mode: OverlayMode) => {
+    setOverlayMode(mode);
+    if (mode === 'text') {
+      setTextStyle((s) => ({ ...s, enabled: true }));
+      if (gif && targetRect && !textTransform) {
+        setTextTransform(getDefaultTextTransform(gif, targetRect));
+      }
+    } else {
+      setTextStyle((s) => ({ ...s, enabled: false }));
     }
+    if (mode === 'blur') {
+      setStep('export');
+    }
+  };
+
+  const handleStickerUpload = async (file: File) => {
+    try {
+      const asset = await loadOverlay(file);
+      if (overlay?.objectUrl) URL.revokeObjectURL(overlay.objectUrl);
+      setOverlay(asset);
+      if (gif && targetRect) {
+        setOverlayTransform(getDefaultOverlayTransform(gif, asset, targetRect));
+      }
+      setStep('export');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to load that image.');
+    }
+  };
+
+  const handlePresetPick = (asset: OverlayAsset) => {
+    if (overlay?.objectUrl) URL.revokeObjectURL(overlay.objectUrl);
+    setOverlay(asset);
+    if (gif && targetRect) {
+      setOverlayTransform(getDefaultOverlayTransform(gif, asset, targetRect));
+    }
+    setStep('export');
+  };
+
+  const handleExport = async (format: 'gif' | 'webp') => {
+    if (!gif || !composedFrames) return;
 
     try {
       setError(null);
       setDebugLog([]);
-      setStatus({
-        stage: 'exporting',
-        message: format === 'gif' ? 'Encoding your edited GIF' : 'Encoding your animated WebP',
-        progress: 0,
-      });
-      const blob =
-        format === 'gif'
-          ? await exportGif({
-              gif,
-              overlay,
-              trackingFrames,
-              onProgress: (progress) =>
-                setStatus({
-                  stage: 'exporting',
-                  message: 'Encoding your edited GIF',
-                  progress,
-                }),
-            })
-          : await exportAnimatedWebp({
-              gif,
-              overlay,
-              trackingFrames,
-              onProgress: (progress) =>
-                setStatus({
-                  stage: 'exporting',
-                  message: 'Encoding your animated WebP',
-                  progress,
-                }),
-            });
-      const downloadUrl = URL.createObjectURL(blob);
+      const label = format === 'gif' ? 'Encoding GIF' : 'Encoding WebP';
+      setStatus({ stage: 'exporting', message: label, progress: 0 });
+
+      const exportOptions = {
+        gif,
+        overlay: overlayMode === 'sticker' ? overlay : null,
+        textStyle: overlayMode === 'text' ? textStyle : null,
+        trackingFrames: composedFrames,
+        blurStyle: overlayMode === 'blur' ? blurStyle : undefined,
+        onProgress: (p: number) => setStatus({ stage: 'exporting', message: label, progress: p }),
+      };
+
+      const blob = format === 'gif'
+        ? await exportGif(exportOptions)
+        : await exportAnimatedWebp(exportOptions);
+
+      const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = `${gif.name.replace(/\.gif$/i, '')}-tracked.${format}`;
+      link.href = url;
+      link.download = `${gif.name.replace(/\.gif$/i, '')}-sticktogif.${format}`;
       link.click();
-      URL.revokeObjectURL(downloadUrl);
+      URL.revokeObjectURL(url);
       setStatus(idleStatus);
-    } catch (nextError) {
-      setError(
-        nextError instanceof Error
-          ? nextError.message
-          : 'Export failed.',
-      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Export failed.');
       setStatus(idleStatus);
     }
   };
 
-  return (
-    <main className="app-shell">
-      <section className="topbar">
-        <div>
-          <p className="eyebrow">StickToGif</p>
-          <h1>Upload, place, track, export.</h1>
-        </div>
-        <div className="topbar__meta">
-          <span>Local-only</span>
-          <span>Mobile-ready</span>
-        </div>
-      </section>
+  /* ── Sidebar content per step ────────────────────────── */
 
-      <StatusBanner status={status} error={error} debugLog={debugLog} />
-
-      <section className="asset-strip">
-        <div className="panel asset-strip__panel">
-          <div className="asset-strip__header">
-            <div>
-              <p className="eyebrow">Step 1</p>
-              <h2>Load your files</h2>
-            </div>
-            <div className="asset-strip__tools">
-              <button
-                type="button"
-                className="button button--secondary"
-                onClick={() => setGuideModalOpen(true)}
-              >
-                Guide
-              </button>
-              <button
-                type="button"
-                className="button button--secondary"
-                onClick={() => setSetupModalOpen(true)}
-              >
-                Setup
-              </button>
-              <button
-                type="button"
-                className="button button--secondary"
-                onClick={resetState}
-                disabled={status.stage !== 'idle'}
-              >
-                Reset
-              </button>
-            </div>
-          </div>
-          <div className="upload-grid">
-            <UploadCard
-              title="1. GIF"
-              description="Animated source GIF"
-              accept="image/gif"
-              buttonLabel={gif ? 'Replace GIF' : 'Upload GIF'}
-              fileName={gif?.name ?? null}
+  const renderSidebar = () => {
+    switch (step) {
+      case 'input':
+        return (
+          <div className="sidebar__step">
+            <DropZone
               onFileSelected={handleGifUpload}
-              onPasteImage={handleGifUpload}
-              onPasteError={setError}
-              onPasteUrl={handleGifUrlPaste}
-            />
-            <UploadCard
-              title="2. Overlay"
-              description="Overlay image"
-              accept="image/png,image/jpeg,image/webp,image/gif"
-              buttonLabel={overlay ? 'Replace Overlay' : 'Upload Overlay'}
-              fileName={overlay?.name ?? null}
-              disabled={!gif}
-              onFileSelected={handleOverlayUpload}
-              onPasteImage={handleOverlayUpload}
-              onPasteError={setError}
+              onPasteUrl={handlePasteUrl}
+              onError={setError}
             />
           </div>
-        </div>
-      </section>
+        );
 
-      {!gif && (
-        <section className="empty-state">
-          <h2>Start with the source GIF</h2>
-          <p>
-            Load the GIF first, then add the overlay image and place both directly in the editor.
-          </p>
-        </section>
-      )}
-
-      {gif && firstFrame && targetRect && (
-        <section className="workspace">
-          <div className="panel">
-            <div className="panel__header">
-              <div>
-                <p className="eyebrow">Step 2</p>
-                <h2>Position on frame one</h2>
-              </div>
-              <div className="panel__actions">
-                <button
-                  type="button"
-                  className="button"
-                  onClick={handleTrack}
-                  disabled={!readyToTrack || status.stage !== 'idle'}
-                >
-                  Track
-                </button>
-              </div>
-            </div>
-            <p className="panel__copy">
-              {overlayTransform
-                ? 'Drag the overlay. Yellow handle scales. Floating dot rotates. Mint box is the tracking area.'
-                : 'The GIF is ready. Add an overlay image to place it here, then adjust the mint tracking box.'}
+      case 'pick-subject':
+        return (
+          <div className="sidebar__step">
+            <p className="step-instruction">Tap the thing you want to track</p>
+            <p className="step-hint">
+              A tracking box will appear. Drag corners to resize, drag the center to move.
             </p>
+            {targetRect && (
+              <button
+                type="button"
+                className="button button--full"
+                onClick={handleTrack}
+                disabled={isBusy}
+              >
+                Track
+              </button>
+            )}
+          </div>
+        );
+
+      case 'tracking':
+        return (
+          <div className="sidebar__step">
+            <p className="step-instruction">Tracking…</p>
+            <div className="progress-bar">
+              <div style={{ width: `${status.progress * 100}%` }} />
+            </div>
+            <p className="step-hint">{status.message}</p>
+          </div>
+        );
+
+      case 'overlay':
+        return (
+          <div className="sidebar__step">
+            <OverlayPicker
+              mode={overlayMode}
+              onModeChange={handleModeChange}
+              onStickerUpload={handleStickerUpload}
+              onPresetPick={handlePresetPick}
+              textStyle={textStyle}
+              onTextStyleChange={(s) => {
+                setTextStyle(s);
+                if (gif && targetRect && !textTransform) {
+                  setTextTransform(getDefaultTextTransform(gif, targetRect));
+                }
+                setStep('export');
+              }}
+              blurStyle={blurStyle}
+              onBlurStyleChange={(s) => {
+                setBlurStyle(s);
+              }}
+            />
+          </div>
+        );
+
+      case 'export':
+        return (
+          <div className="sidebar__step">
+            {/* Show overlay controls when in sticker/text/blur mode */}
+            {overlayMode && (
+              <OverlayPicker
+                mode={overlayMode}
+                onModeChange={handleModeChange}
+                onStickerUpload={handleStickerUpload}
+                onPresetPick={handlePresetPick}
+                textStyle={textStyle}
+                onTextStyleChange={(s) => {
+                  setTextStyle(s);
+                  if (gif && targetRect && !textTransform) {
+                    setTextTransform(getDefaultTextTransform(gif, targetRect));
+                  }
+                }}
+                blurStyle={blurStyle}
+                onBlurStyleChange={setBlurStyle}
+              />
+            )}
+            <div className="export-actions">
+              <button
+                type="button"
+                className="button button--full"
+                onClick={() => handleExport('gif')}
+                disabled={isBusy}
+              >
+                {isExporting ? `Exporting…` : 'Export GIF'}
+              </button>
+              <button
+                type="button"
+                className="button button--secondary button--full"
+                onClick={() => handleExport('webp')}
+                disabled={isBusy}
+              >
+                Export WebP
+              </button>
+            </div>
+            <button type="button" className="start-over-link" onClick={resetAll} disabled={isBusy}>
+              Start over
+            </button>
+          </div>
+        );
+    }
+  };
+
+  /* ── Canvas area content per step ─────────────────────── */
+
+  const renderCanvas = () => {
+    // Step A: drop zone fills the canvas area
+    if (step === 'input') {
+      return (
+        <div className="empty-canvas">
+          <h1>Pin something to a moving subject — locally, in seconds.</h1>
+          <p>Drop a GIF above or tap to choose from your files.</p>
+        </div>
+      );
+    }
+
+    // Step B: editor canvas with tap-to-place
+    if (step === 'pick-subject' && gif && firstFrame) {
+      return (
+        <>
+          <div className="canvas-stage canvas-stage--tracking">
             <EditorCanvas
               frame={firstFrame}
-              overlay={overlay}
-              overlayTransform={
-                overlayTransform ?? {
-                  x: rectCenter(targetRect).x,
-                  y: rectCenter(targetRect).y,
-                  width: 1,
-                  height: 1,
-                  rotation: 0,
-                }
-              }
+              tapToPlace={!targetRect}
               targetRect={targetRect}
-              onOverlayChange={(transform) => {
-                setOverlayTransform(transform);
-                setTrackingFrames(null);
-              }}
-              onTargetRectChange={(nextRect) => {
-                setTargetRect(clampRectToBounds(nextRect, gif.width, gif.height));
-                setTrackingFrames(null);
-              }}
+              onTargetRectChange={(r) => setTargetRect(clampRectToBounds(r, gif.width, gif.height))}
+              onTapPlace={handleTapPlace}
             />
           </div>
-        </section>
-      )}
+          <div className="canvas-meta">
+            <span>{gif.width}×{gif.height}</span>
+            <span>{gif.frames.length} frames</span>
+            <span>{truncateFilename(gif.name, 28)}</span>
+          </div>
+        </>
+      );
+    }
 
-      {gif && overlay && trackingFrames && (
-        <section className="preview-section">
-          <div className="panel">
-            <div className="panel__header">
-              <div>
-                <p className="eyebrow">Step 3</p>
-                <h2>Tracked result</h2>
-              </div>
-              <div className="panel__actions panel__actions--export">
-                <button
-                  type="button"
-                  className="button button--secondary"
-                  onClick={() => handleExport('webp')}
-                  disabled={status.stage !== 'idle'}
-                >
-                  Export WebP
-                </button>
-                <button
-                  type="button"
-                  className="button"
-                  onClick={() => handleExport('gif')}
-                  disabled={status.stage !== 'idle'}
-                >
-                  Export GIF
-                </button>
-              </div>
+    // Step C: tracking in progress
+    if (step === 'tracking' && gif && firstFrame) {
+      return (
+        <>
+          <div className="canvas-stage">
+            <canvas
+              ref={(canvas) => {
+                if (!canvas || !firstFrame) return;
+                canvas.width = firstFrame.width;
+                canvas.height = firstFrame.height;
+                const ctx = canvas.getContext('2d');
+                if (ctx) ctx.putImageData(firstFrame, 0, 0);
+              }}
+            />
+            <div className="canvas-progress">
+              <div className="canvas-progress__fill" style={{ width: `${status.progress * 100}%` }} />
             </div>
-            <PreviewPlayer gif={gif} overlay={overlay} trackingFrames={trackingFrames} />
           </div>
-        </section>
-      )}
+        </>
+      );
+    }
 
-      <Modal
-        title="Setup"
-        open={setupModalOpen}
-        onClose={() => setSetupModalOpen(false)}
-      >
-        <div className="stat-list">
-          <div>
-            <span>GIF</span>
-            <strong>{gif?.name ?? 'Missing'}</strong>
+    // Steps D & E: preview player (with or without overlay)
+    if ((step === 'overlay' || step === 'export') && gif && composedFrames) {
+      return (
+        <>
+          <PreviewPlayer
+            gif={gif}
+            overlay={overlayMode === 'sticker' ? overlay : null}
+            textStyle={overlayMode === 'text' ? textStyle : null}
+            trackingFrames={composedFrames}
+            blurStyle={overlayMode === 'blur' ? blurStyle : null}
+            progressValue={isExporting ? status.progress : undefined}
+          />
+          <div className="canvas-meta">
+            <span>{gif.width}×{gif.height}</span>
+            <span>{gif.frames.length} frames</span>
+            <span>{truncateFilename(gif.name, 28)}</span>
           </div>
-          <div>
-            <span>Frames</span>
-            <strong>{setupStats?.frameCount ?? 'n/a'}</strong>
+        </>
+      );
+    }
+
+    return null;
+  };
+
+  /* ── Render ────────────────────────────────────────────── */
+
+  return (
+    <main className="app-shell">
+      <div className={`product-frame ${step === 'input' ? 'product-frame--empty' : ''}`}>
+        {/* Sidebar */}
+        <aside className="sidebar">
+          <div className="sidebar__brand" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <img src={logoAsset} alt="StickToGif" className="brand-logo" />
+            <button
+              type="button"
+              className="playback-bar__btn"
+              style={{ width: 32, height: 32, fontSize: '0.85rem' }}
+              onClick={() => setShowHelp(true)}
+              aria-label="Help"
+            >
+              ?
+            </button>
           </div>
-          <div>
-            <span>Canvas</span>
-            <strong>{setupStats?.gifSize ?? 'n/a'}</strong>
-          </div>
-          <div>
-            <span>Overlay</span>
-            <strong>{overlay?.name ?? 'Missing'}</strong>
-          </div>
-          <div>
-            <span>Overlay size</span>
-            <strong>{setupStats?.overlaySize ?? 'Upload overlay'}</strong>
-          </div>
-          <div>
-            <span>Target rect</span>
-            <strong>{setupStats?.target ?? 'n/a'}</strong>
-          </div>
+          {error && (
+            <div className="error-banner" role="alert">
+              {error}
+            </div>
+          )}
+          {renderSidebar()}
+        </aside>
+
+        {/* Main area */}
+        <div className="main-area">
+          {renderCanvas()}
         </div>
-      </Modal>
+      </div>
 
-      <Modal
-        title="Guide"
-        open={guideModalOpen}
-        onClose={() => setGuideModalOpen(false)}
-      >
-        <ul className="info-list">
-          <li>Step 1: upload the GIF and confirm the first frame looks right.</li>
-          <li>Step 2: upload the overlay and place it where it should stick.</li>
-          <li>Resize the mint box around the object you want to track.</li>
-          <li>The dashed grey line previews how the overlay is anchored to that target.</li>
-          <li>Track first, review the preview, then export the final GIF.</li>
-        </ul>
+      {/* Help Modal */}
+      <Modal isOpen={showHelp} onClose={() => setShowHelp(false)} title="How to use StickToGif">
+        <div className="prose">
+          <p><strong>StickToGif</strong> is a fast, local tool to pin an image, text, or a blur effect onto a moving object inside a GIF.</p>
+          <ol>
+            <li><strong>Input:</strong> Drop a GIF or paste a URL to get started.</li>
+            <li><strong>Pick Subject:</strong> Tap or click on the object you want to track. A tracking box will appear. Drag its corners to resize it exactly around the subject.</li>
+            <li><strong>Track:</strong> Hit Track. The engine runs locally in your browser to follow the object frame-by-frame.</li>
+            <li><strong>Overlay:</strong> Choose between a Sticker, Text, or Blur effect. The app instantly attaches it to the tracked motion.</li>
+            <li><strong>Export:</strong> Save your final animated GIF or WebP directly to your device!</li>
+          </ol>
+          <p><em>Privacy: Everything runs entirely in your browser. No files are uploaded or stored anywhere.</em></p>
+        </div>
       </Modal>
     </main>
   );

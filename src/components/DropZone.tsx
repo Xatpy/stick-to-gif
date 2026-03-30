@@ -1,0 +1,83 @@
+import { useRef } from 'react';
+
+interface DropZoneProps {
+  onFileSelected: (file: File) => void;
+  onPasteUrl?: (url: string) => Promise<void> | void;
+  onError?: (message: string) => void;
+}
+
+export function DropZone({ onFileSelected, onPasteUrl, onError }: DropZoneProps) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const accept = 'image/gif';
+
+  const handleFiles = (files: FileList | null) => {
+    const file = files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/gif')) {
+      onError?.('Please select an animated GIF file.');
+      return;
+    }
+    onFileSelected(file);
+  };
+
+  const handlePasteUrl = async () => {
+    if (!onPasteUrl || !navigator.clipboard?.readText) return;
+
+    try {
+      const text = (await navigator.clipboard.readText()).trim();
+      if (!text) {
+        onError?.('Clipboard is empty.');
+        return;
+      }
+      const url = new URL(text);
+      await onPasteUrl(url.toString());
+    } catch {
+      onError?.('Could not paste a valid URL from clipboard.');
+    }
+  };
+
+  return (
+    <div
+      className="drop-zone"
+      onClick={() => inputRef.current?.click()}
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.currentTarget.classList.add('drop-zone--over');
+      }}
+      onDragLeave={(e) => {
+        e.currentTarget.classList.remove('drop-zone--over');
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        e.currentTarget.classList.remove('drop-zone--over');
+        handleFiles(e.dataTransfer.files);
+      }}
+    >
+      <div className="drop-zone__content">
+        <span className="drop-zone__icon">📁</span>
+        <p className="drop-zone__label">Drop a GIF here</p>
+        <p className="drop-zone__hint">or tap to choose from your files</p>
+      </div>
+      {onPasteUrl && (
+        <button
+          type="button"
+          className="drop-zone__paste"
+          onClick={(e) => {
+            e.stopPropagation();
+            void handlePasteUrl();
+          }}
+        >
+          or paste URL
+        </button>
+      )}
+      <input
+        ref={inputRef}
+        hidden
+        accept={accept}
+        type="file"
+        onChange={(e) => handleFiles(e.target.files)}
+      />
+    </div>
+  );
+}

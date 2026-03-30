@@ -1,18 +1,22 @@
 import { GIFEncoder, applyPalette, quantize } from 'gifenc';
 import { drawComposedFrame } from '../render/drawComposedFrame';
-import type { DecodedGif, OverlayAsset, TrackingFrame } from '../types';
+import type { BlurStyle, DecodedGif, OverlayAsset, TextOverlayStyle, TrackingFrame } from '../types';
 
 interface ExportOptions {
   gif: DecodedGif;
-  overlay: OverlayAsset;
+  overlay: OverlayAsset | null;
+  textStyle?: TextOverlayStyle | null;
   trackingFrames: TrackingFrame[];
+  blurStyle?: BlurStyle | null;
   onProgress?: (progress: number) => void;
 }
 
 export async function exportGif({
   gif,
   overlay,
+  textStyle,
   trackingFrames,
+  blurStyle,
   onProgress,
 }: ExportOptions) {
   const canvas = document.createElement('canvas');
@@ -37,8 +41,12 @@ export async function exportGif({
     drawComposedFrame({
       context,
       frame: frame.imageData,
-      overlay: overlay.source,
-      transform: trackingFrame.overlay,
+      overlay: overlay?.source,
+      imageTransform: trackingFrame.imageOverlay,
+      textStyle,
+      textTransform: trackingFrame.textOverlay,
+      blurRegion: blurStyle ? trackingFrame.region : null,
+      blurStyle,
     });
 
     const rgba = context.getImageData(0, 0, gif.width, gif.height).data;

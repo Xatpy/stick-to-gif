@@ -1,17 +1,24 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { drawComposedFrame } from '../render/drawComposedFrame';
-import type { DecodedGif, OverlayAsset, TrackingFrame } from '../types';
+import type { BlurStyle, DecodedGif, OverlayAsset, TextOverlayStyle, TrackingFrame } from '../types';
 
 interface PreviewPlayerProps {
   gif: DecodedGif;
-  overlay: OverlayAsset;
+  overlay: OverlayAsset | null;
+  textStyle?: TextOverlayStyle | null;
   trackingFrames: TrackingFrame[];
+  blurStyle?: BlurStyle | null;
+  /** Whether to show a progress bar at the bottom of the canvas */
+  progressValue?: number;
 }
 
 export function PreviewPlayer({
   gif,
   overlay,
+  textStyle,
   trackingFrames,
+  blurStyle,
+  progressValue,
 }: PreviewPlayerProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [frameIndex, setFrameIndex] = useState(0);
@@ -31,30 +38,38 @@ export function PreviewPlayer({
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) {
-      return;
-    }
+    if (!canvas) return;
 
     canvas.width = gif.width;
     canvas.height = gif.height;
 
     const context = canvas.getContext('2d');
-    if (!context) {
-      return;
-    }
+    if (!context) return;
 
     const trackingFrame = trackingFrames[frameIndex];
-    if (!trackingFrame) {
-      return;
-    }
+    if (!trackingFrame) return;
 
     drawComposedFrame({
       context,
       frame: gif.frames[frameIndex]!.imageData,
-      overlay: overlay.source,
-      transform: trackingFrame.overlay,
+      overlay: overlay?.source,
+      imageTransform: trackingFrame.imageOverlay,
+      textStyle,
+      textTransform: trackingFrame.textOverlay,
+      blurRegion: blurStyle ? trackingFrame.region : null,
+      blurStyle,
     });
-  }, [frameIndex, gif, overlay, trackingFrames]);
+
+    // Draw tracking box outline when no overlay is applied (magic moment preview)
+    if (!overlay && !textStyle?.enabled && !blurStyle) {
+      const region = trackingFrame.region;
+      context.strokeStyle = '#55f0c0';
+      context.lineWidth = 2;
+      context.setLineDash([10, 8]);
+      context.strokeRect(region.x, region.y, region.width, region.height);
+      context.setLineDash([]);
+    }
+  }, [frameIndex, gif, overlay, textStyle, trackingFrames, blurStyle]);
 
   useEffect(() => {
     if (!isPlaying) {
@@ -91,39 +106,46 @@ export function PreviewPlayer({
   }, [frameDurations, frameIndex, gif.frames.length, isPlaying]);
 
   return (
-    <div className="preview-player">
-      <div className="editor-canvas">
+    <>
+      <div className="canvas-stage">
         <canvas ref={canvasRef} />
+        {progressValue != null && progressValue > 0 && progressValue < 1 && (
+          <div className="canvas-progress">
+            <div className="canvas-progress__fill" style={{ width: `${progressValue * 100}%` }} />
+          </div>
+        )}
       </div>
-      <div className="preview-controls">
+      <div className="playback-bar">
         <button
           type="button"
-          className="button"
-          onClick={() => setIsPlaying((value) => !value)}
+          className="playback-bar__btn"
+          onClick={() => setIsPlaying((v) => !v)}
+          aria-label={isPlaying ? 'Pause' : 'Play'}
         >
-          {isPlaying ? 'Pause' : 'Play'}
+          {isPlaying ? '⏸' : '▶'}
         </button>
         <button
           type="button"
-          className="button button--secondary"
+          className="playback-bar__btn"
           onClick={() => {
             startedAtRef.current = 0;
             setFrameIndex(0);
           }}
+          aria-label="Restart"
         >
-          Restart
+          ↺
         </button>
         <input
           type="range"
           min={0}
           max={gif.frames.length - 1}
           value={frameIndex}
-          onChange={(event) => setFrameIndex(Number(event.target.value))}
+          onChange={(e) => setFrameIndex(Number(e.target.value))}
         />
-        <span>
-          Frame {frameIndex + 1}/{gif.frames.length}
+        <span className="playback-bar__frame">
+          {frameIndex + 1}/{gif.frames.length}
         </span>
       </div>
-    </div>
+    </>
   );
 }

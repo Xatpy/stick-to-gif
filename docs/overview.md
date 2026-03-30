@@ -2,118 +2,83 @@
 
 ## What the app is
 
-StickToGif is a frontend-only web app for attaching an image overlay to an object inside an animated GIF.
+StickToGif is a single-purpose, frontend-only web app for pinning an image, text, or blur effect onto a moving object inside an animated GIF.
 
-The app is built for meme creation, not professional VFX work.
+The app is built to be fast and frictionless. Its entire value proposition is getting the "magic moment" of tracking as fast as possible.
 
 Everything runs locally in the browser:
 
 - GIF decoding
-- first-frame editing
-- object tracking
+- object tracking (via OpenCV.js)
+- post-hoc overlay computation
 - preview playback
-- GIF export
+- GIF and WebP export
 
 No files are uploaded to a server.
 
-## What the app does
-
-The app lets a user:
-
-1. Upload an animated GIF
-2. Decode that GIF into individual frames in the browser
-3. View the first frame in an editor immediately
-4. Upload an overlay image
-5. Position, resize, and rotate that overlay on the first frame
-6. Draw or adjust a target rectangle around the object to track
-7. Run object tracking across the rest of the GIF
-8. Preview the tracked result as an animation
-9. Export a new edited GIF
-
 ## Core interaction model
 
-### Step 1: Load assets
+The app uses a strict 5-step linear flow (A→E), forcing the user to track the subject *before* setting up any overlays.
 
-- The user uploads a source GIF
-- The user uploads an overlay image
-- The app shows the loaded asset names and uses the GIF first frame as the editor background
+### Step A: Input
 
-### Step 2: Set up tracking
+- The user drops a GIF or pastes a URL into a full-canvas DropZone.
+- The app automatically advances as soon as the GIF loads.
 
-On the editor canvas:
+### Step B: Pick Subject
 
-- The mint rectangle represents the target area that will be tracked
-- The overlay can be dragged to reposition it
-- The yellow resize handle changes overlay size
-- The floating rotation handle rotates the overlay
-- A dashed grey line connects the target center to the overlay center as a visual preview of the tracking relationship
+- The canvas shows the first frame of the GIF.
+- The user taps or clicks to place a tracking box.
+- The tracking box is resizable via corner handles or pinch-to-zoom on mobile.
 
-### Step 3: Track and preview
+### Step C: Tracking
 
-When the user clicks `Track`, the app:
+- When the user selects `Track`, the app uses optical flow (OpenCV.js) to track the feature points inside the box across all frames.
+- A minimal progress bar appears on the canvas.
+- No overlays are present during this step.
 
-- loads OpenCV.js in the browser
-- prepares the first frame
-- detects feature points inside the selected target rectangle
-- tracks those points frame-to-frame with optical flow
-- estimates translation and some conservative scale/rotation updates
-- smooths the result to reduce jitter
-- falls back toward the last stable region if confidence drops
+### Step D: Overlay
 
-The user can then preview the result and export a new GIF.
+Once tracking completes, the preview automatically plays, showing the tracking box following the subject. The user can now pick one of three overlay modes:
+
+1. **Sticker**: Upload a custom image or pick from built-in SVG presets.
+2. **Text**: Add a text overlay with basic color svatches and weight controls.
+3. **Blur/Mosaic**: Apply a pixelated mosaic effect over the tracked region with an intensity slider.
+
+Because the object is already tracked, the app computes the overlay matrices post-hoc using the stored region history.
+
+### Step E: Export
+
+- The user previews the final result and exports a new edited GIF or WebP.
+- Rendering happens entirely in-browser.
+
+## UI structure & Responsive behavior
+
+The UI is built genuinely **mobile-first**:
+
+- **Desktop (≥768px)**: Split-screen view with a fixed sidebar on the left and a large, centered canvas on the right.
+- **Mobile (<768px)**: The canvas fills the top of the viewport. Controls live in a slide-up "Bottom Sheet" that preserves canvas space.
+- All interactive elements (buttons, tracking handles, color swatches) use touch targets of at least 44×44px.
+- The app has no modals or accordions — controls are contextually presented based on the current step.
 
 ## Tracking behavior
 
-Tracking is intentionally pragmatic:
+Tracking relies on `cv.calcOpticalFlowPyrLK`:
 
 - translation is the primary behavior
 - scale is limited and conservative
-- rotation is only used when point motion appears reliable
+- rotation is only used when point motion appears highly reliable
 - smoothing is used to reduce jitter
 - low-confidence tracking falls back toward the last stable state
 
 The system is optimized for “good enough and funny” rather than perfect motion estimation.
 
-## Export behavior
-
-After tracking:
-
-- each output frame is rendered to a canvas
-- the original GIF frame and overlay are composited together
-- the result is encoded back into a GIF in-browser
-- the user downloads the final file directly from the browser
-
-## UI structure
-
-The current app is organized into three visible workflow stages:
-
-1. `Step 1` loads the GIF and overlay
-2. `Step 2` handles editor positioning and tracking
-3. `Step 3` shows preview and export
-
-Additional explanatory content is available through modal dialogs instead of always occupying screen space.
-
-## Responsive behavior
-
-The UI is designed to work on desktop and mobile:
-
-- upload controls stack on smaller screens
-- the editor becomes the primary focus area
-- secondary details move into modals
-- action buttons expand to fit smaller viewports more cleanly
-
 ## Known limitations
 
-Current MVP limitations:
-
-- single overlay only
-- GIF only, no video input
-- no backend or cloud save
+- single overlay only per export
+- GIF input only (video export scaffolded but input parsing deferred)
+- no backend or community sharing
 - no multi-object tracking
 - no advanced timeline editing
 - tracking quality depends on visible texture and motion consistency
-- GIF export uses browser-side palette quantization, so some quality loss is expected on difficult source material
-
-## Intended use
-
-StickToGif is meant for quick, local, browser-based edits where the user wants to stick a graphic onto a moving subject and get a usable exported GIF without leaving the browser.
+- GIF export relies on simple browser-side palette quantization (WebP provides a higher quality alternative)

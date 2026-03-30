@@ -4,6 +4,10 @@ export type ProcessingStage =
   | 'tracking'
   | 'exporting';
 
+export type AppStep = 'input' | 'pick-subject' | 'tracking' | 'overlay' | 'export';
+
+export type OverlayMode = 'sticker' | 'text' | 'blur';
+
 export interface GifFrame {
   index: number;
   delay: number;
@@ -46,6 +50,20 @@ export interface OverlayTransform {
   rotation: number;
 }
 
+export interface TextOverlayStyle {
+  enabled: boolean;
+  text: string;
+  color: string;
+  strokeColor: string;
+  fontFamily: string;
+  fontWeight: number;
+}
+
+export interface BlurStyle {
+  /** 0–1 range: 0 = light mosaic, 1 = heavy mosaic */
+  intensity: number;
+}
+
 export interface TrackedRegion extends Rect {
   rotation: number;
 }
@@ -54,7 +72,8 @@ export interface TrackingFrame {
   frameIndex: number;
   confidence: number;
   region: TrackedRegion;
-  overlay: OverlayTransform;
+  imageOverlay: OverlayTransform | null;
+  textOverlay: OverlayTransform | null;
 }
 
 export interface StatusState {

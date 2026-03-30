@@ -122,14 +122,19 @@ export const blendRegion = (
 });
 
 export const blendOverlay = (
-  previous: OverlayTransform,
-  next: OverlayTransform,
+  previous: OverlayTransform | null,
+  next: OverlayTransform | null,
   alpha: number,
-): OverlayTransform => ({
-  x: lerp(previous.x, next.x, alpha),
-  y: lerp(previous.y, next.y, alpha),
-  width: lerp(previous.width, next.width, alpha),
-  height: lerp(previous.height, next.height, alpha),
-  rotation:
-    previous.rotation + wrapAngle(next.rotation - previous.rotation) * alpha,
-});
+): OverlayTransform | null => {
+  if (!previous) return next;
+  if (!next) return previous;
+
+  return {
+    x: lerp(previous.x, next.x, alpha),
+    y: lerp(previous.y, next.y, alpha),
+    width: lerp(previous.width, next.width, alpha),
+    height: lerp(previous.height, next.height, alpha),
+    rotation:
+      previous.rotation + wrapAngle(next.rotation - previous.rotation) * alpha,
+  };
+};
