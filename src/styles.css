@@ -18,7 +18,7 @@
   --stroke-strong: rgba(99, 88, 79, 0.3);
   --text-muted: #81736a;
   --teal: #55f0c0;
-  --sidebar-width: 300px;
+  --sidebar-width: 332px;
 }
 
 * { box-sizing: border-box; }
@@ -91,6 +91,76 @@ button, input, textarea, select { font: inherit; }
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+.stepper {
+  display: grid;
+  gap: 8px;
+  padding: 14px 20px 0;
+}
+
+.stepper__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.stepper__dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(99, 88, 79, 0.18);
+  background: rgba(255, 255, 255, 0.45);
+  font-size: 0.76rem;
+}
+
+.stepper__item--done .stepper__dot {
+  background: rgba(85, 240, 192, 0.16);
+  border-color: rgba(85, 240, 192, 0.55);
+  color: #2a6b5a;
+}
+
+.stepper__item--current {
+  color: #4e4139;
+}
+
+.stepper__item--current .stepper__dot {
+  background: #9f5d39;
+  border-color: #9f5d39;
+  color: white;
+}
+
+.step-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.step-nav__back {
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: #4e4139;
+  font-size: 0.84rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.step-nav__back:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.step-nav__count {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 
 .step-instruction {
@@ -437,6 +507,7 @@ button, input, textarea, select { font: inherit; }
   min-height: 44px;
   transition: border-color 0.15s, background 0.15s;
   text-align: center;
+  white-space: nowrap;
 }
 
 .mode-btn:hover {
@@ -634,7 +705,7 @@ button, input, textarea, select { font: inherit; }
 /* ── Responsive: tablet ───────────────────────────────────── */
 @media (max-width: 1024px) {
   :root {
-    --sidebar-width: 270px;
+    --sidebar-width: 292px;
   }
 
   .canvas-stage canvas {
@@ -725,6 +796,25 @@ button, input, textarea, select { font: inherit; }
     margin: 0;
     padding: 16px 0; 
     border-top: 1px solid rgba(99, 88, 79, 0.1);
+  }
+
+  .stepper {
+    order: 4;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    padding: 0 0 12px;
+  }
+
+  .stepper__item {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+    font-size: 0.72rem;
+  }
+
+  .stepper__label {
+    line-height: 1.15;
   }
 
   /* Ensure 44px tap targets for mobile */

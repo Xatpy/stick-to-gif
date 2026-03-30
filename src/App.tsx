@@ -42,6 +42,7 @@ const defaultTextStyle: TextOverlayStyle = {
 };
 
 const defaultBlurStyle: BlurStyle = { intensity: 0.5 };
+const flowSteps = ['Upload', 'Pick subject', 'Choose effect', 'Export'] as const;
 
 /* ── Helpers ────────────────────────────────────────────────── */
 
@@ -170,6 +171,19 @@ export default function App() {
   const firstFrame = gif?.frames[0]?.imageData ?? null;
   const isExporting = status.stage === 'exporting';
   const isBusy = status.stage !== 'idle';
+  const activeFlowStep = (() => {
+    switch (step) {
+      case 'input':
+        return 0;
+      case 'pick-subject':
+      case 'tracking':
+        return 1;
+      case 'overlay':
+        return 2;
+      case 'export':
+        return 3;
+    }
+  })();
 
   /* Derived: frames with overlay applied */
   const composedFrames = (() => {
@@ -189,6 +203,13 @@ export default function App() {
 
   const appendDebug = (entry: DebugEntry) => {
     setDebugLog((current) => [...current.slice(-199), entry]);
+  };
+
+  const clearDownstreamState = () => {
+    setTrackingFrames(null);
+    setOverlayMode(null);
+    setOverlayTransform(null);
+    setTextTransform(null);
   };
 
   const resetAll = () => {
@@ -241,6 +262,7 @@ export default function App() {
 
   const handleTapPlace = (point: Point) => {
     if (!gif) return;
+    clearDownstreamState();
     setTargetRect(getDefaultTargetRect(gif, point));
   };
 
@@ -260,6 +282,7 @@ export default function App() {
     try {
       setError(null);
       setDebugLog([]);
+      clearDownstreamState();
       setStep('tracking');
       setStatus({ stage: 'tracking', message: 'Loading tracking engine', progress: 0.02 });
       await new Promise<void>((r) => requestAnimationFrame(() => r()));
@@ -279,6 +302,25 @@ export default function App() {
       appendDebug({ timestamp: new Date().toLocaleTimeString(), level: 'error', message: e instanceof Error ? e.stack ?? e.message : 'Unknown error' });
       setStatus(idleStatus);
       setStep('pick-subject');
+    }
+  };
+
+  const handleBack = () => {
+    if (isBusy) return;
+
+    switch (step) {
+      case 'pick-subject':
+        setStep('input');
+        break;
+      case 'tracking':
+      case 'overlay':
+        setStep('pick-subject');
+        break;
+      case 'export':
+        setStep('overlay');
+        break;
+      case 'input':
+        break;
     }
   };
 
@@ -378,6 +420,12 @@ export default function App() {
       case 'pick-subject':
         return (
           <div className="sidebar__step">
+            <div className="step-nav">
+              <button type="button" className="step-nav__back" onClick={handleBack} disabled={isBusy}>
+                Back
+              </button>
+              <span className="step-nav__count">Step 2 of 4</span>
+            </div>
             <p className="step-instruction">Tap the thing you want to track</p>
             <p className="step-hint">
               A tracking box will appear. Drag corners to resize, drag the center to move.
@@ -398,6 +446,12 @@ export default function App() {
       case 'tracking':
         return (
           <div className="sidebar__step">
+            <div className="step-nav">
+              <button type="button" className="step-nav__back" onClick={handleBack} disabled>
+                Back
+              </button>
+              <span className="step-nav__count">Step 2 of 4</span>
+            </div>
             <p className="step-instruction">Tracking…</p>
             <div className="progress-bar">
               <div style={{ width: `${status.progress * 100}%` }} />
@@ -409,6 +463,12 @@ export default function App() {
       case 'overlay':
         return (
           <div className="sidebar__step">
+            <div className="step-nav">
+              <button type="button" className="step-nav__back" onClick={handleBack} disabled={isBusy}>
+                Back
+              </button>
+              <span className="step-nav__count">Step 3 of 4</span>
+            </div>
             <OverlayPicker
               mode={overlayMode}
               onModeChange={handleModeChange}
@@ -433,6 +493,12 @@ export default function App() {
       case 'export':
         return (
           <div className="sidebar__step">
+            <div className="step-nav">
+              <button type="button" className="step-nav__back" onClick={handleBack} disabled={isBusy}>
+                Back
+              </button>
+              <span className="step-nav__count">Step 4 of 4</span>
+            </div>
             {/* Show overlay controls when in sticker/text/blur mode */}
             {overlayMode && (
               <OverlayPicker
@@ -505,7 +571,10 @@ export default function App() {
               frame={firstFrame}
               tapToPlace={!targetRect}
               targetRect={targetRect}
-              onTargetRectChange={(r) => setTargetRect(clampRectToBounds(r, gif.width, gif.height))}
+              onTargetRectChange={(r) => {
+                clearDownstreamState();
+                setTargetRect(clampRectToBounds(r, gif.width, gif.height));
+              }}
               onTapPlace={handleTapPlace}
             />
           </div>
@@ -591,6 +660,22 @@ export default function App() {
               {error}
             </div>
           )}
+          <div className="stepper" aria-label="Progress">
+            {flowSteps.map((label, index) => {
+              const statusName =
+                index < activeFlowStep ? 'done' : index === activeFlowStep ? 'current' : 'upcoming';
+              return (
+                <div
+                  key={label}
+                  className={`stepper__item stepper__item--${statusName}`}
+                  aria-current={index === activeFlowStep ? 'step' : undefined}
+                >
+                  <span className="stepper__dot">{index + 1}</span>
+                  <span className="stepper__label">{label}</span>
+                </div>
+              );
+            })}
+          </div>
           {renderSidebar()}
         </aside>
 
