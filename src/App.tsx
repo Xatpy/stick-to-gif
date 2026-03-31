@@ -37,12 +37,13 @@ const defaultTextStyle: TextOverlayStyle = {
   text: '',
   color: '#ffffff',
   strokeColor: '#2b2118',
-  fontFamily: '"Avenir Next", "Segoe UI", sans-serif',
+  fontFamily: 'Impact, "Arial Black", sans-serif',
   fontWeight: 800,
 };
 
 const defaultBlurStyle: BlurStyle = { intensity: 0.5 };
 const flowSteps = ['Upload', 'Pick subject', 'Choose effect', 'Export'] as const;
+const MAX_UPLOADED_STICKER_DIMENSION = 1024;
 
 /* ── Helpers ────────────────────────────────────────────────── */
 
@@ -69,7 +70,7 @@ function getDefaultTextTransform(gif: DecodedGif, targetRect: Rect): OverlayTran
   const center = rectCenter(targetRect);
   return {
     x: center.x,
-    y: Math.max(36, targetRect.y - 28),
+    y: center.y,
     width: Math.min(gif.width * 0.6, 320),
     height: Math.max(36, gif.height * 0.12),
     rotation: 0,
@@ -90,18 +91,82 @@ function scaleOverlayTransform(
 }
 
 async function loadOverlay(file: File): Promise<OverlayAsset> {
-  const objectUrl = URL.createObjectURL(file);
-  try {
-    const bitmap = await createImageBitmap(file);
-    return { name: file.name, width: bitmap.width, height: bitmap.height, source: bitmap, objectUrl };
-  } catch {
-    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const next = new Image();
-      next.onload = () => resolve(next);
-      next.onerror = () => reject(new Error('Unable to decode that overlay image.'));
-      next.src = objectUrl;
+  const originalObjectUrl = URL.createObjectURL(file);
+  let optimizedObjectUrl: string | null = null;
+
+  const decodeAssetFromBlob = async (blob: Blob, objectUrl: string) => {
+    try {
+      const bitmap = await createImageBitmap(blob);
+      return { width: bitmap.width, height: bitmap.height, source: bitmap as CanvasImageSource, objectUrl };
+    } catch {
+      const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const next = new Image();
+        next.onload = () => resolve(next);
+        next.onerror = () => reject(new Error('Unable to decode that overlay image.'));
+        next.src = objectUrl;
+      });
+
+      return {
+        width: image.naturalWidth,
+        height: image.naturalHeight,
+        source: image as CanvasImageSource,
+        objectUrl,
+      };
+    }
+  };
+
+  const encodeCanvas = (canvas: HTMLCanvasElement) =>
+    new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            resolve(blob);
+            return;
+          }
+          reject(new Error('Unable to optimize that overlay image.'));
+        },
+        'image/webp',
+        0.9,
+      );
     });
-    return { name: file.name, width: image.naturalWidth, height: image.naturalHeight, source: image, objectUrl };
+
+  try {
+    const decoded = await decodeAssetFromBlob(file, originalObjectUrl);
+    const maxDimension = Math.max(decoded.width, decoded.height);
+
+    if (maxDimension <= MAX_UPLOADED_STICKER_DIMENSION) {
+      return { name: file.name, ...decoded };
+    }
+
+    const scale = MAX_UPLOADED_STICKER_DIMENSION / maxDimension;
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(decoded.width * scale));
+    canvas.height = Math.max(1, Math.round(decoded.height * scale));
+
+    const context = canvas.getContext('2d');
+    if (!context) {
+      throw new Error('Unable to optimize that overlay image.');
+    }
+
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = 'high';
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(decoded.source, 0, 0, canvas.width, canvas.height);
+    if (decoded.source instanceof ImageBitmap) {
+      decoded.source.close();
+    }
+
+    const optimizedBlob = await encodeCanvas(canvas);
+    optimizedObjectUrl = URL.createObjectURL(optimizedBlob);
+    URL.revokeObjectURL(originalObjectUrl);
+
+    return { name: file.name, ...(await decodeAssetFromBlob(optimizedBlob, optimizedObjectUrl)) };
+  } catch (error) {
+    URL.revokeObjectURL(originalObjectUrl);
+    if (optimizedObjectUrl) {
+      URL.revokeObjectURL(optimizedObjectUrl);
+    }
+    throw error;
   }
 }
 
@@ -121,13 +186,13 @@ async function loadRemoteFile(url: string) {
 }
 
 async function loadBundledSample() {
-  const response = await fetch(`${import.meta.env.BASE_URL}sample.gif`);
+  const response = await fetch(`${import.meta.env.BASE_URL}demo.gif`);
   if (!response.ok) {
     throw new Error('Unable to load the sample clip.');
   }
 
   const blob = await response.blob();
-  return new File([blob], 'sample.gif', { type: blob.type || 'image/gif' });
+  return new File([blob], 'demo.gif', { type: blob.type || 'image/gif' });
 }
 
 /* ── App ────────────────────────────────────────────────────── */
@@ -150,6 +215,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false);
   const [webpSupported, setWebpSupported] = useState<boolean | null>(null);
+  const [preferShareLabel, setPreferShareLabel] = useState(false);
   const [, setDebugLog] = useState<DebugEntry[]>([]);
 
   useEffect(() => {
@@ -176,6 +242,24 @@ export default function App() {
     };
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia('(max-width: 767px) and (pointer: coarse)');
+    const syncPreference = () => setPreferShareLabel(mediaQuery.matches);
+    syncPreference();
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', syncPreference);
+      return () => mediaQuery.removeEventListener('change', syncPreference);
+    }
+
+    mediaQuery.addListener(syncPreference);
+    return () => mediaQuery.removeListener(syncPreference);
+  }, []);
+
   const [firstFrame, setFirstFrame] = useState<ImageData | null>(null);
   const isExporting = status.stage === 'exporting';
 
@@ -198,7 +282,7 @@ export default function App() {
           }
           bitmap.close();
         })
-        .catch(() => {});
+        .catch(() => { });
     } else {
       setFirstFrame(null);
     }
@@ -207,6 +291,8 @@ export default function App() {
     };
   }, [gif]);
   const isBusy = status.stage !== 'idle';
+  const primaryExportLabel = preferShareLabel ? 'Share GIF' : 'Download GIF';
+  const secondaryExportLabel = preferShareLabel ? 'Share WebP' : 'Download WebP';
   const activeFlowStep = (() => {
     switch (step) {
       case 'input':
@@ -338,7 +424,7 @@ export default function App() {
 
       setStatus({ stage: 'tracking', message: 'Tracking complete! Reviewing...', progress: 1.0 });
       setTrackingFrames(result);
-      
+
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       setStatus(idleStatus);
@@ -462,7 +548,7 @@ export default function App() {
         link.download = filename;
         link.click();
       }
-      
+
       // Cleanup happens eventually or handled safely via object urls
       setTimeout(() => URL.revokeObjectURL(url), 1000 * 60);
     } catch (e) {
@@ -651,7 +737,7 @@ export default function App() {
                 onClick={() => handleExport('gif')}
                 disabled={isBusy}
               >
-                {isExporting ? `Exporting…` : 'Export GIF'}
+                {isExporting ? `Exporting…` : primaryExportLabel}
               </button>
               <button
                 type="button"
@@ -660,7 +746,7 @@ export default function App() {
                 disabled={isBusy || webpSupported === false}
                 title={webpSupported === false ? 'WebP export is unavailable in this browser.' : undefined}
               >
-                {webpSupported === false ? 'WebP Unavailable' : 'Export WebP'}
+                {webpSupported === false ? 'WebP Unavailable' : secondaryExportLabel}
               </button>
             </div>
             <button type="button" className="start-over-link" onClick={resetAll} disabled={isBusy}>

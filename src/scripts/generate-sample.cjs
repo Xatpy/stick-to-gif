@@ -9,7 +9,7 @@ for (let f = 0; f < FRAMES; f++) {
   const rgba = new Uint8ClampedArray(W * H * 4);
   // Light warm background
   for (let i = 0; i < rgba.length; i += 4) {
-    rgba[i] = 240; rgba[i+1] = 237; rgba[i+2] = 230; rgba[i+3] = 255;
+    rgba[i] = 240; rgba[i + 1] = 237; rgba[i + 2] = 230; rgba[i + 3] = 255;
   }
   // Bouncing red circle — good tracking target
   const t = f / FRAMES;

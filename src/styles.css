@@ -527,6 +527,10 @@ button, input, textarea, select { font: inherit; }
 .playback-bar input[type="range"] {
   flex: 1;
   min-width: 80px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  accent-color: #9f5d39;
 }
 
 .playback-bar__frame {
@@ -787,6 +791,7 @@ button, input, textarea, select { font: inherit; }
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 12px;
 }
 
@@ -794,6 +799,17 @@ button, input, textarea, select { font: inherit; }
 .swatch-row {
   display: flex;
   gap: 6px;
+  flex: 1 1 100%;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.swatch-row::-webkit-scrollbar {
+  display: none;
 }
 
 .swatch {
@@ -821,6 +837,7 @@ button, input, textarea, select { font: inherit; }
   border: 1px solid var(--stroke);
   border-radius: 8px;
   overflow: hidden;
+  flex: 0 0 auto;
 }
 
 .weight-btn {
@@ -835,6 +852,51 @@ button, input, textarea, select { font: inherit; }
 
 .weight-btn.is-active {
   background: rgba(85, 240, 192, 0.15);
+  color: #2a6b5a;
+}
+
+.text-style-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1 1 100%;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.text-style-controls::-webkit-scrollbar {
+  display: none;
+}
+
+.text-style-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.text-style-btn {
+  border: 2px solid rgba(99, 88, 79, 0.14);
+  border-radius: 12px;
+  background: var(--surface-strong);
+  color: #4e4139;
+  min-height: 44px;
+  min-width: 108px;
+  padding: 10px 12px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.text-style-btn:hover {
+  border-color: rgba(99, 88, 79, 0.28);
+}
+
+.text-style-btn.is-active {
+  border-color: var(--teal);
+  background: rgba(85, 240, 192, 0.1);
   color: #2a6b5a;
 }
 
@@ -1124,12 +1186,15 @@ button, input, textarea, select { font: inherit; }
   }
 
   .text-options-row {
-    flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
   }
 
   .swatch-row {
     justify-content: center;
+  }
+
+  .weight-toggle {
+    align-self: flex-start;
   }
 }
 @media (max-width: 520px) {

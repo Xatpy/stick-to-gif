@@ -12,7 +12,7 @@ vi.mock('../render/drawComposedFrame', () => ({
 
 function createDecodedGif(): DecodedGif {
   return {
-    name: 'sample.gif',
+    name: 'demo.gif',
     width: 1,
     height: 1,
     sourceKind: 'gif',

@@ -27,8 +27,16 @@ const TEXT_SWATCHES = [
   { color: '#ffe234', stroke: '#2b2118', label: 'Yellow' },
   { color: '#ff4444', stroke: '#2b2118', label: 'Red' },
   { color: '#44dd66', stroke: '#2b2118', label: 'Green' },
+  { color: '#4ea4ff', stroke: '#1d2c44', label: 'Blue' },
+  { color: '#ff6bb5', stroke: '#4b2134', label: 'Pink' },
   { color: 'transparent', stroke: '#ffffff', label: 'Outline' },
 ];
+
+const TEXT_FONT_PRESETS = [
+  { label: 'Meme', family: 'Impact, "Arial Black", sans-serif' },
+  { label: 'Rounded', family: '"Avenir Next", "Segoe UI", sans-serif' },
+  { label: 'Serif', family: 'Georgia, "Times New Roman", serif' },
+] as const;
 
 const CUSTOM_EMOJI_OPTIONS = [
   '😀', '😂', '😍', '🥶', '🤯', '😭',
@@ -202,21 +210,36 @@ export function OverlayPicker({
                   />
                 ))}
               </div>
-              <div className="weight-toggle">
-                <button
-                  type="button"
-                  className={`weight-btn${textStyle.fontWeight <= 400 ? ' is-active' : ''}`}
-                  onClick={() => onTextStyleChange({ ...textStyle, fontWeight: 400 })}
-                >
-                  Aa
-                </button>
-                <button
-                  type="button"
-                  className={`weight-btn${textStyle.fontWeight >= 700 ? ' is-active' : ''}`}
-                  onClick={() => onTextStyleChange({ ...textStyle, fontWeight: 800 })}
-                >
-                  <strong>Aa</strong>
-                </button>
+              <div className="text-style-controls" aria-label="Text style controls">
+                <div className="weight-toggle">
+                  <button
+                    type="button"
+                    className={`weight-btn${textStyle.fontWeight <= 400 ? ' is-active' : ''}`}
+                    onClick={() => onTextStyleChange({ ...textStyle, fontWeight: 400 })}
+                  >
+                    Aa
+                  </button>
+                  <button
+                    type="button"
+                    className={`weight-btn${textStyle.fontWeight >= 700 ? ' is-active' : ''}`}
+                    onClick={() => onTextStyleChange({ ...textStyle, fontWeight: 800 })}
+                  >
+                    <strong>Aa</strong>
+                  </button>
+                </div>
+                <div className="text-style-row">
+                  {TEXT_FONT_PRESETS.map((preset) => (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      className={`text-style-btn${textStyle.fontFamily === preset.family ? ' is-active' : ''}`}
+                      style={{ fontFamily: preset.family }}
+                      onClick={() => onTextStyleChange({ ...textStyle, fontFamily: preset.family })}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
