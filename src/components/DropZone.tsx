@@ -4,9 +4,19 @@ interface DropZoneProps {
   onFileSelected: (file: File) => void;
   onPasteUrl?: (url: string) => Promise<void> | void;
   onError?: (message: string) => void;
+  label?: string;
+  hint?: string;
+  compact?: boolean;
 }
 
-export function DropZone({ onFileSelected, onPasteUrl, onError }: DropZoneProps) {
+export function DropZone({
+  onFileSelected,
+  onPasteUrl,
+  onError,
+  label = 'Drop a GIF or MP4 here',
+  hint = 'or tap to choose from your files',
+  compact = false,
+}: DropZoneProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const accept = 'image/gif,video/mp4';
 
@@ -42,7 +52,7 @@ export function DropZone({ onFileSelected, onPasteUrl, onError }: DropZoneProps)
 
   return (
     <div
-      className="drop-zone"
+      className={`drop-zone${compact ? ' drop-zone--compact' : ''}`}
       onClick={() => inputRef.current?.click()}
       onDragOver={(e) => {
         e.preventDefault();
@@ -64,8 +74,8 @@ export function DropZone({ onFileSelected, onPasteUrl, onError }: DropZoneProps)
             <path d="M6 18a1 1 0 0 1 0-2h12a1 1 0 1 1 0 2H6Z" />
           </svg>
         </span>
-        <p className="drop-zone__label">Drop a GIF or MP4 here</p>
-        <p className="drop-zone__hint">or tap to choose from your files</p>
+        <p className="drop-zone__label">{label}</p>
+        <p className="drop-zone__hint">{hint}</p>
       </div>
       {onPasteUrl && (
         <button

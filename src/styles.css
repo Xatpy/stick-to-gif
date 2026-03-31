@@ -215,6 +215,11 @@ button, input, textarea, select { font: inherit; }
   min-height: 180px;
 }
 
+.drop-zone--compact {
+  min-height: 120px;
+  padding: 18px 14px;
+}
+
 .drop-zone:hover,
 .drop-zone--over {
   border-color: var(--teal);
@@ -389,31 +394,81 @@ button, input, textarea, select { font: inherit; }
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
-  text-align: center;
+  align-items: stretch;
+  min-height: 420px;
+  gap: 10px;
+}
+
+.empty-canvas__media {
+  flex: 1 1 0;
   min-height: 420px;
   border-radius: 14px;
   background: linear-gradient(180deg, #dce9e7 0%, #d5dbe0 100%);
   border: 2px solid rgba(99, 88, 79, 0.14);
-  padding: 40px 28px;
+  padding: 10px;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
 }
 
-.empty-canvas h1 {
+.empty-canvas__demo {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  border-radius: 14px;
+  object-fit: cover;
+}
+
+.empty-canvas__caption {
+  margin: 0;
+  color: #2a8e75;
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-align: left;
+}
+
+.input-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.input-sidebar__headline {
   margin: 0;
   font-family: "Iowan Old Style", "Palatino Linotype", serif;
-  font-size: clamp(1.6rem, 2.8vw, 2.4rem);
-  line-height: 1.12;
-  max-width: 22ch;
+  font-size: clamp(1.65rem, 2.3vw, 2.5rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
 }
 
-.empty-canvas p {
-  margin: 12px 0 0;
-  color: var(--text-muted);
-  max-width: 34ch;
+.input-sidebar__cta {
+  min-height: 52px;
 }
 
-.empty-canvas__actions {
-  margin-top: 20px;
+.privacy-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(85, 240, 192, 0.12);
+  border: 1px solid rgba(85, 240, 192, 0.36);
+  color: #2a6b5a;
+  font-size: 0.84rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.privacy-badge__icon {
+  display: inline-flex;
+  color: #2a8e75;
+}
+
+.privacy-badge__icon svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
 }
 
 .error-boundary {
@@ -753,35 +808,53 @@ button, input, textarea, select { font: inherit; }
 
   /* 2a. Headline (Empty State -> bottom area) */
   .empty-canvas {
-    order: 4;
+    order: 2;
+    min-height: auto;
+    padding: 0;
+    margin: 0 0 10px;
+    gap: 8px;
+  }
+
+  .empty-canvas__media {
+    min-height: auto;
+    padding: 0;
     background: transparent;
     border: none;
-    min-height: auto;
-    padding: 24px 8px 16px;
-    margin: 0;
   }
 
-  .empty-canvas h1 {
-    font-size: 1.75rem;
-    line-height: 1.25;
-    text-align: center;
+  .empty-canvas__demo {
+    width: 100%;
+    max-height: 280px;
+    aspect-ratio: auto;
+    border-radius: 14px;
   }
 
-  .empty-canvas p {
-    display: none;
+  .empty-canvas__caption {
+    padding: 0 2px;
   }
 
   /* 2b. DropZone (Empty State -> top large area) */
   .product-frame--empty .sidebar__step {
     order: 3;
-    flex: 1 1 0; /* Fill the top large area */
+    flex: 0 0 auto;
     display: flex;
     padding: 0;
     margin: 0;
     border-top: none;
   }
+
+  .product-frame--empty .input-sidebar {
+    width: 100%;
+    gap: 12px;
+  }
+
+  .product-frame--empty .input-sidebar__headline {
+    font-size: 1.5rem;
+    line-height: 1.18;
+    text-align: left;
+  }
+
   .product-frame--empty .drop-zone {
-    flex: 1; /* Stretch the dashed box to fill the space */
     margin-bottom: 0;
   }
 

@@ -456,12 +456,27 @@ export default function App() {
       case 'input':
         return (
           <div className="sidebar__step" data-step="input">
-            <DropZone
-              onFileSelected={handleGifUpload}
-              onPasteUrl={handlePasteUrl}
-              onError={setError}
-            />
-            <p className="step-hint">Everything runs locally in your browser. Nothing is uploaded.</p>
+            <div className="input-sidebar">
+              <h1 className="input-sidebar__headline">Tracked stickers for your GIFs — right on your device.</h1>
+              <div className="privacy-badge" role="note" aria-label="100 percent private, no uploads, instant processing">
+                <span className="privacy-badge__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" focusable="false">
+                    <path d="M12 2 5 5v6c0 5.2 3 9.9 7 11 4-1.1 7-5.8 7-11V5l-7-3Zm0 2.2 5 2.1V11c0 4.1-2.2 7.9-5 9-2.8-1.1-5-4.9-5-9V6.3l5-2.1Zm0 2.3a3 3 0 0 0-3 3v1h-.4A1.6 1.6 0 0 0 7 12.1v3.3A1.6 1.6 0 0 0 8.6 17h6.8a1.6 1.6 0 0 0 1.6-1.6v-3.3a1.6 1.6 0 0 0-1.6-1.6H15v-1a3 3 0 0 0-3-3Zm0 2a1 1 0 0 1 1 1v1h-2v-1a1 1 0 0 1 1-1Z" />
+                  </svg>
+                </span>
+                <span>100% private · no uploads · instant processing</span>
+              </div>
+              <button type="button" className="button button--full input-sidebar__cta" onClick={() => void handleSampleLoad()} disabled={isBusy}>
+                Try the sample clip →
+              </button>
+              <DropZone
+                onFileSelected={handleGifUpload}
+                onPasteUrl={handlePasteUrl}
+                onError={setError}
+                label="or drop your own GIF / MP4"
+                compact
+              />
+            </div>
           </div>
         );
 
@@ -603,13 +618,14 @@ export default function App() {
     if (step === 'input') {
       return (
         <div className="empty-canvas">
-          <h1>Pin anything to a moving subject. Runs entirely in your browser.</h1>
-          <p>Your GIFs never leave your device.</p>
-          <div className="empty-canvas__actions">
-            <button type="button" className="button" onClick={() => void handleSampleLoad()} disabled={isBusy}>
-              Try The Sample Clip
-            </button>
+          <div className="empty-canvas__media">
+            <img
+              className="empty-canvas__demo"
+              src={`${import.meta.env.BASE_URL}demo.gif`}
+              alt="Demo GIF showing a sticker tracked onto a moving subject"
+            />
           </div>
+          <p className="empty-canvas__caption">Made with StickToGif</p>
         </div>
       );
     }
@@ -712,22 +728,24 @@ export default function App() {
               {error}
             </div>
           )}
-          <div className="stepper" aria-label="Progress">
-            {flowSteps.map((label, index) => {
-              const statusName =
-                index < activeFlowStep ? 'done' : index === activeFlowStep ? 'current' : 'upcoming';
-              return (
-                <div
-                  key={label}
-                  className={`stepper__item stepper__item--${statusName}`}
-                  aria-current={index === activeFlowStep ? 'step' : undefined}
-                >
-                  <span className="stepper__dot">{index + 1}</span>
-                  <span className="stepper__label">{label}</span>
-                </div>
-              );
-            })}
-          </div>
+          {step !== 'input' && (
+            <div className="stepper" aria-label="Progress">
+              {flowSteps.map((label, index) => {
+                const statusName =
+                  index < activeFlowStep ? 'done' : index === activeFlowStep ? 'current' : 'upcoming';
+                return (
+                  <div
+                    key={label}
+                    className={`stepper__item stepper__item--${statusName}`}
+                    aria-current={index === activeFlowStep ? 'step' : undefined}
+                  >
+                    <span className="stepper__dot">{index + 1}</span>
+                    <span className="stepper__label">{label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
           {renderSidebar()}
         </aside>
 
