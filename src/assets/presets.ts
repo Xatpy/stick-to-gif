@@ -28,21 +28,25 @@ function renderEmojiToCanvas(emoji: string, size: number): HTMLCanvasElement {
   return canvas;
 }
 
+export function createEmojiOverlayAsset(emoji: string, name = 'Custom emoji'): OverlayAsset {
+  const size = 128;
+  const canvas = renderEmojiToCanvas(emoji, size);
+  return {
+    name,
+    width: size,
+    height: size,
+    source: canvas,
+    objectUrl: '',
+  };
+}
+
 let cachedPresets: OverlayAsset[] | null = null;
 
 export function getPresets(): OverlayAsset[] {
   if (cachedPresets) return cachedPresets;
 
-  const size = 128;
   cachedPresets = PRESETS.map((preset) => {
-    const canvas = renderEmojiToCanvas(preset.emoji, size);
-    return {
-      name: preset.name,
-      width: size,
-      height: size,
-      source: canvas,
-      objectUrl: '',
-    };
+    return createEmojiOverlayAsset(preset.emoji, preset.name);
   });
 
   return cachedPresets;
