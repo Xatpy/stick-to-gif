@@ -16,7 +16,7 @@ Everything runs locally in the browser:
 
 - GIF decoding
 - MP4 frame sampling
-- object tracking with OpenCV.js
+- object tracking with OpenCV.js in a Web Worker
 - overlay computation
 - preview playback
 - GIF and animated WebP export
@@ -51,6 +51,7 @@ The app uses a strict step-based flow:
 ### Step A: Input
 
 - The user drops a GIF or MP4 into the source drop zone.
+- A bundled sample GIF can be loaded immediately from the empty state.
 - The app decodes the source locally and advances as soon as the first usable frame sequence is ready.
 
 ### Step B: Pick subject
@@ -58,12 +59,15 @@ The app uses a strict step-based flow:
 - The canvas shows the first frame.
 - The user taps or clicks the thing to track.
 - A tracking box appears and can be moved or resized before tracking begins.
+- The initial box is no longer a fixed default square; it is heuristically refined from the tapped point.
 
 ### Step C: Tracking
 
 - The user selects `Track`.
 - OpenCV.js finds feature points inside the selected region and follows them frame to frame with optical flow.
+- Template matching assists tracking when feature confidence is weak.
 - Progress is shown while the browser computes the tracked region history.
+- Tracking executes in a worker instead of on the main thread.
 
 ### Step D: Attachment mode
 
@@ -107,6 +111,13 @@ The current app flow is organized around progressive steps:
 - attachment selection
 - export
 
+The UI now includes:
+
+- a visible 4-step progress indicator
+- local back navigation between steps without forcing re-upload
+- a short post-tracking reveal before moving into effect selection
+- a mobile-safe canvas interaction fix for pointer capture during drag
+
 The first frame is shown as soon as a source is loaded so the user can define the tracking target before committing to a sticker, text, or blur choice.
 
 ## Known limitations
@@ -117,3 +128,4 @@ The first frame is shown as soon as a source is loaded so the user can define th
 - no trimming, timeline editing, or multi-object workflows
 - tracking quality depends on visible texture and motion consistency
 - GIF export uses browser-side palette quantization, so animated WebP may look cleaner on some sources
+- worker/bootstrap behavior is sensitive enough that it is now covered by a dedicated smoke test

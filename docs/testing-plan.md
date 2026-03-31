@@ -13,6 +13,18 @@ The two main risks we want to cover are:
 
 Everything else is secondary for now.
 
+## Current Status
+
+The first testing pass described here is now partially implemented:
+
+- `vitest` is installed and running
+- pure-logic tests exist for motion, overlay layout, math, and image analysis
+- a narrow `EditorCanvas` regression test covers the pointer-capture drag fix
+- a Playwright smoke test covers sample loading, base-path handling, worker startup, and OpenCV bootstrap
+- media pipeline tests cover a few targeted error paths
+
+This document still reflects the intended testing scope, but the items above are no longer just planned.
+
 ## What We Will Test First
 
 ### 1. Pure logic tests with `vitest`
@@ -36,6 +48,7 @@ Initial test cases:
 - `getDefaultTargetRect` selects a tighter region for a clear synthetic object than for a flat region.
 - `refineRectFromLocalRegion` returns `null` for low-contrast or ambiguous cases.
 - Low-confidence overlay/layout behavior remains stable over repeated frames.
+- `EditorCanvas` keeps dragging active across `pointerleave` when pointer capture is still held, and releases correctly on `pointercancel`.
 
 ### 2. One Playwright smoke test
 
@@ -65,6 +78,8 @@ Specific regression to protect:
 
 That one test should catch the class of failures that have already happened in this project.
 
+This smoke test is now implemented.
+
 ## Minimal Follow-Up Tests
 
 If we add anything after the first pass, it should stay narrow.
@@ -86,6 +101,8 @@ Only add tests for:
 - unreadable/truncated input surfaces an error rather than hanging.
 - export throws on frame-count mismatch.
 - successful GIF export returns a non-empty blob.
+
+These media error-path checks are now implemented in a minimal form.
 
 ## What We Are Explicitly Not Testing Yet
 
