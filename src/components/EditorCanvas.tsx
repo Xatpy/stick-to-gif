@@ -236,6 +236,7 @@ export function EditorCanvas({
   return (
     <canvas
       ref={canvasRef}
+      data-testid="editor-canvas"
       onPointerDown={(event) => {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -470,8 +471,16 @@ export function EditorCanvas({
         }
         setDragState(null);
       }}
-      onPointerLeave={() => {
-        if (!dragState) return;
+      onPointerCancel={(event) => {
+        const canvas = canvasRef.current;
+        if (canvas?.hasPointerCapture(event.pointerId)) {
+          canvas.releasePointerCapture(event.pointerId);
+        }
+        setDragState(null);
+      }}
+      onPointerLeave={(event) => {
+        const canvas = canvasRef.current;
+        if (!dragState || canvas?.hasPointerCapture(event.pointerId)) return;
         setDragState(null);
       }}
     />

@@ -470,7 +470,8 @@ export default function App() {
           <div className="sidebar__step">
             <div className="step-nav">
               <button type="button" className="step-nav__back" onClick={handleBack} disabled={isBusy}>
-                Back
+                <span aria-hidden="true">←</span>
+                <span>Back</span>
               </button>
               <span className="step-nav__count">Step 2 of 4</span>
             </div>
@@ -496,7 +497,8 @@ export default function App() {
           <div className="sidebar__step">
             <div className="step-nav">
               <button type="button" className="step-nav__back" onClick={handleBack} disabled>
-                Back
+                <span aria-hidden="true">←</span>
+                <span>Back</span>
               </button>
               <span className="step-nav__count">Step 2 of 4</span>
             </div>
@@ -513,7 +515,8 @@ export default function App() {
           <div className="sidebar__step">
             <div className="step-nav">
               <button type="button" className="step-nav__back" onClick={handleBack} disabled={isBusy}>
-                Back
+                <span aria-hidden="true">←</span>
+                <span>Back</span>
               </button>
               <span className="step-nav__count">Step 3 of 4</span>
             </div>
@@ -543,7 +546,8 @@ export default function App() {
           <div className="sidebar__step">
             <div className="step-nav">
               <button type="button" className="step-nav__back" onClick={handleBack} disabled={isBusy}>
-                Back
+                <span aria-hidden="true">←</span>
+                <span>Back</span>
               </button>
               <span className="step-nav__count">Step 4 of 4</span>
             </div>

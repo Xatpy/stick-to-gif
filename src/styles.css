@@ -143,18 +143,30 @@ button, input, textarea, select { font: inherit; }
 }
 
 .step-nav__back {
-  border: none;
-  background: transparent;
-  padding: 0;
+  border: 1px solid rgba(99, 88, 79, 0.14);
+  background: rgba(255, 255, 255, 0.58);
+  padding: 8px 12px;
   color: #4e4139;
   font-size: 0.84rem;
   font-weight: 800;
   cursor: pointer;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+.step-nav__back:hover {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(99, 88, 79, 0.24);
 }
 
 .step-nav__back:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+  transform: none;
 }
 
 .step-nav__count {
@@ -343,6 +355,7 @@ button, input, textarea, select { font: inherit; }
   max-width: 100%;
   max-height: calc(100vh - 180px);
   cursor: crosshair;
+  touch-action: none;
 }
 
 .canvas-meta {
@@ -787,7 +800,7 @@ button, input, textarea, select { font: inherit; }
     order: 4;
     width: 100%;
     justify-content: center;
-    padding: 12px 0 0;
+    padding: 12px 0 6px;
   }
 
   /* 5. Bottom Sheet Controls (Loaded state -> bottom area) */
@@ -802,7 +815,8 @@ button, input, textarea, select { font: inherit; }
     order: 4;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 6px;
-    padding: 0 0 12px;
+    margin-top: 10px;
+    padding: 6px 0 14px;
   }
 
   .stepper__item {
