@@ -41,6 +41,19 @@ async function seekTo(video: HTMLVideoElement, time: number) {
   await seekPromise;
 }
 
+async function canvasToBlob(canvas: HTMLCanvasElement, type = 'image/png', quality?: number) {
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error('Canvas could not produce a blob'));
+      },
+      type,
+      quality,
+    );
+  });
+}
+
 export async function decodeVideo(
   file: File,
   { onProgress }: DecodeVideoOptions = {},
@@ -107,10 +120,11 @@ export async function decodeVideo(
 
       context.clearRect(0, 0, width, height);
       context.drawImage(video, 0, 0, width, height);
+      const blob = await canvasToBlob(canvas);
       frames.push({
         index,
         delay: FRAME_DELAY_MS,
-        imageData: context.getImageData(0, 0, width, height),
+        blob,
       });
 
       onProgress?.({

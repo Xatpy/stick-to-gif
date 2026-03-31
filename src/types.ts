@@ -11,7 +11,7 @@ export type OverlayMode = 'sticker' | 'text' | 'blur';
 export interface GifFrame {
   index: number;
   delay: number;
-  imageData: ImageData;
+  blob: Blob;
 }
 
 export interface DecodedGif {

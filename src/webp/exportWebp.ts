@@ -206,10 +206,6 @@ export async function exportAnimatedWebp({
     throw new Error('Unable to create a WebP export canvas.');
   }
 
-  if (!(await canEncodeWebp())) {
-    throw new Error('WebP export is not supported in this browser. Export GIF instead.');
-  }
-
   const frames: EncodedWebpFrame[] = [];
 
   for (let index = 0; index < gif.frames.length; index += 1) {
@@ -220,9 +216,13 @@ export async function exportAnimatedWebp({
       throw new Error('Tracking output did not match the GIF frame count.');
     }
 
+    const bitmap = await createImageBitmap(frame.blob);
+
     drawComposedFrame({
       context,
-      frame: frame.imageData,
+      frame: bitmap,
+      width: gif.width,
+      height: gif.height,
       overlay: overlay?.source,
       imageTransform: trackingFrame.imageOverlay,
       textStyle,
@@ -233,6 +233,7 @@ export async function exportAnimatedWebp({
 
     const rgba = context.getImageData(0, 0, gif.width, gif.height).data;
     const webpBytes = await canvasToWebpBytes(canvas);
+    bitmap.close();
 
     frames.push({
       width: gif.width,

@@ -26,6 +26,19 @@ function createCanvas(width: number, height: number) {
   return { canvas, context };
 }
 
+async function canvasToBlob(canvas: HTMLCanvasElement, type = 'image/png', quality?: number) {
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error('Canvas could not produce a blob'));
+      },
+      type,
+      quality,
+    );
+  });
+}
+
 export async function decodeGif(file: File): Promise<DecodedGif> {
   const buffer = await file.arrayBuffer();
   const parsed = parseGIF(buffer);
@@ -43,7 +56,7 @@ export async function decodeGif(file: File): Promise<DecodedGif> {
     )
       ?.loops ?? 0;
 
-  const { context } = createCanvas(width, height);
+  const { canvas, context } = createCanvas(width, height);
   const { canvas: patchCanvas, context: patchContext } = createCanvas(width, height);
   const frames = [];
   let restoreImageData: ImageData | null = null;
@@ -66,10 +79,11 @@ export async function decodeGif(file: File): Promise<DecodedGif> {
     patchContext.putImageData(patch, frame.dims.left, frame.dims.top);
     context.drawImage(patchCanvas, 0, 0);
 
+    const blob = await canvasToBlob(canvas);
     frames.push({
       index,
       delay: Math.max(20, frame.delay || 100),
-      imageData: context.getImageData(0, 0, width, height),
+      blob,
     });
 
     if (frame.disposalType === 2) {

@@ -61,9 +61,13 @@ async function buildGlobalPalette(
       throw new Error('Tracking output did not match the GIF frame count.');
     }
 
+    const bitmap = await createImageBitmap(frame.blob);
+
     drawComposedFrame({
       context,
-      frame: frame.imageData,
+      frame: bitmap,
+      width: gif.width,
+      height: gif.height,
       overlay: overlay?.source,
       imageTransform: trackingFrame.imageOverlay,
       textStyle,
@@ -74,6 +78,7 @@ async function buildGlobalPalette(
 
     const rgba = context.getImageData(0, 0, gif.width, gif.height).data;
     samples.push(sampleFramePixels(rgba, pixelStep));
+    bitmap.close();
   }
 
   const totalLength = samples.reduce((sum, rgba) => sum + rgba.length, 0);
@@ -117,9 +122,13 @@ export async function exportGif({
       throw new Error('Tracking output did not match the GIF frame count.');
     }
 
+    const bitmap = await createImageBitmap(frame.blob);
+
     drawComposedFrame({
       context,
-      frame: frame.imageData,
+      frame: bitmap,
+      width: gif.width,
+      height: gif.height,
       overlay: overlay?.source,
       imageTransform: trackingFrame.imageOverlay,
       textStyle,
@@ -130,6 +139,7 @@ export async function exportGif({
 
     const rgba = context.getImageData(0, 0, gif.width, gif.height).data;
     const indexedFrame = applyPalette(rgba, palette);
+    bitmap.close();
 
     encoder.writeFrame(indexedFrame, gif.width, gif.height, {
       palette,

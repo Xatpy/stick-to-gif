@@ -3,7 +3,9 @@ import { drawTextOverlay } from './drawTextOverlay';
 
 interface DrawOptions {
   context: CanvasRenderingContext2D;
-  frame: ImageData;
+  frame: CanvasImageSource;
+  width: number;
+  height: number;
   overlay?: CanvasImageSource | null;
   imageTransform?: OverlayTransform | null;
   textStyle?: TextOverlayStyle | null;
@@ -44,6 +46,8 @@ function getScratchCanvases(targetCanvas: HTMLCanvasElement): ScratchCanvases {
 export function drawComposedFrame({
   context,
   frame,
+  width,
+  height,
   overlay,
   imageTransform,
   textStyle,
@@ -53,22 +57,23 @@ export function drawComposedFrame({
 }: DrawOptions) {
   const { baseCanvas, baseContext, mosaicCanvas, mosaicContext } = getScratchCanvases(context.canvas);
 
-  if (baseCanvas.width !== frame.width || baseCanvas.height !== frame.height) {
-    baseCanvas.width = frame.width;
-    baseCanvas.height = frame.height;
+  if (baseCanvas.width !== width || baseCanvas.height !== height) {
+    baseCanvas.width = width;
+    baseCanvas.height = height;
   }
 
-  baseContext.putImageData(frame, 0, 0);
-  context.clearRect(0, 0, frame.width, frame.height);
+  baseContext.clearRect(0, 0, width, height);
+  baseContext.drawImage(frame, 0, 0, width, height);
+  context.clearRect(0, 0, width, height);
   context.drawImage(baseCanvas, 0, 0);
 
   // Blur/mosaic: pixelate the tracked region
   if (blurRegion && blurStyle) {
-    const { x, y, width, height } = blurRegion;
+    const { x, y, width: regionW, height: regionH } = blurRegion;
     const rx = Math.max(0, Math.round(x));
     const ry = Math.max(0, Math.round(y));
-    const rw = Math.min(Math.round(width), frame.width - rx);
-    const rh = Math.min(Math.round(height), frame.height - ry);
+    const rw = Math.min(Math.round(regionW), width - rx);
+    const rh = Math.min(Math.round(regionH), height - ry);
 
     if (rw > 0 && rh > 0) {
       // Mosaic: downscale then upscale with nearest-neighbor

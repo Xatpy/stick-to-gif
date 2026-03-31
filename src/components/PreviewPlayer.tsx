@@ -37,6 +37,7 @@ export function PreviewPlayer({
   }, [gif, trackingFrames]);
 
   useEffect(() => {
+    let cancelled = false;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -49,26 +50,43 @@ export function PreviewPlayer({
     const trackingFrame = trackingFrames[frameIndex];
     if (!trackingFrame) return;
 
-    drawComposedFrame({
-      context,
-      frame: gif.frames[frameIndex]!.imageData,
-      overlay: overlay?.source,
-      imageTransform: trackingFrame.imageOverlay,
-      textStyle,
-      textTransform: trackingFrame.textOverlay,
-      blurRegion: blurStyle ? trackingFrame.region : null,
-      blurStyle,
-    });
+    createImageBitmap(gif.frames[frameIndex]!.blob)
+      .then((bitmap) => {
+        if (cancelled) {
+          bitmap.close();
+          return;
+        }
 
-    // Draw tracking box outline when no overlay is applied (magic moment preview)
-    if (!overlay && !textStyle?.enabled && !blurStyle) {
-      const region = trackingFrame.region;
-      context.strokeStyle = '#55f0c0';
-      context.lineWidth = 2;
-      context.setLineDash([10, 8]);
-      context.strokeRect(region.x, region.y, region.width, region.height);
-      context.setLineDash([]);
-    }
+        drawComposedFrame({
+          context,
+          frame: bitmap,
+          width: gif.width,
+          height: gif.height,
+          overlay: overlay?.source,
+          imageTransform: trackingFrame.imageOverlay,
+          textStyle,
+          textTransform: trackingFrame.textOverlay,
+          blurRegion: blurStyle ? trackingFrame.region : null,
+          blurStyle,
+        });
+
+        // Draw tracking box outline when no overlay is applied (magic moment preview)
+        if (!overlay && !textStyle?.enabled && !blurStyle) {
+          const region = trackingFrame.region;
+          context.strokeStyle = '#55f0c0';
+          context.lineWidth = 2;
+          context.setLineDash([10, 8]);
+          context.strokeRect(region.x, region.y, region.width, region.height);
+          context.setLineDash([]);
+        }
+
+        bitmap.close();
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
   }, [frameIndex, gif, overlay, textStyle, trackingFrames, blurStyle]);
 
   useEffect(() => {
