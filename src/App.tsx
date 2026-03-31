@@ -709,10 +709,14 @@ export default function App() {
         {/* Sidebar */}
         <aside className="sidebar">
           <div className="sidebar__brand" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <a
+              href={import.meta.env.BASE_URL}
+              style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}
+              aria-label="Go to StickToGif home"
+            >
               <img src={logoAsset} alt="" className="brand-logo" />
               <span className="brand-text">StickToGif</span>
-            </div>
+            </a>
             <button
               type="button"
               className="playback-bar__btn"

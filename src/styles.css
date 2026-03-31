@@ -850,11 +850,19 @@ button, input, textarea, select { font: inherit; }
 
 /* ── Responsive: mobile (< 768px) ─────────────────────────── */
 @media (max-width: 767px) {
+  .app-shell {
+    min-height: 100vh;
+    height: auto;
+    overflow-y: auto;
+  }
+
   .product-frame {
     display: flex;
     flex-direction: column;
     padding: 16px;
-    height: 100vh;
+    min-height: 100vh;
+    height: auto;
+    overflow-y: visible;
   }
 
   /* Flatten structure to freely order elements top-to-bottom */
@@ -928,11 +936,17 @@ button, input, textarea, select { font: inherit; }
   /* 3. Canvas Box (Loaded State -> top large area) */
   .canvas-stage {
     order: 3;
-    flex: 1 1 0; /* Fill the top large area */
-    min-height: 0;
+    flex: 0 0 auto;
+    min-height: auto;
     padding: 8px; /* Slightly more padding for the gradient box */
     border-radius: 16px;
     width: 100%;
+  }
+
+  .canvas-stage canvas {
+    width: 100%;
+    height: auto;
+    max-height: none;
   }
 
   /* 3. Metadata or Playback underneath the Canvas */

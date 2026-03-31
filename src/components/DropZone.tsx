@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface DropZoneProps {
   onFileSelected: (file: File) => void;
@@ -19,6 +19,35 @@ export function DropZone({
 }: DropZoneProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const accept = 'image/gif,video/mp4';
+
+  useEffect(() => {
+    if (!onPasteUrl) return;
+
+    const handleWindowPaste = (event: ClipboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+
+      const text = event.clipboardData?.getData('text/plain').trim();
+      if (!text) return;
+
+      try {
+        const url = new URL(text);
+        event.preventDefault();
+        void onPasteUrl(url.toString());
+      } catch {
+        // Ignore non-URL clipboard content for keyboard paste shortcuts.
+      }
+    };
+
+    window.addEventListener('paste', handleWindowPaste);
+    return () => window.removeEventListener('paste', handleWindowPaste);
+  }, [onPasteUrl]);
 
   const handleFiles = (files: FileList | null) => {
     const file = files?.[0];
