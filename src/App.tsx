@@ -76,6 +76,19 @@ function getDefaultTextTransform(gif: DecodedGif, targetRect: Rect): OverlayTran
   };
 }
 
+function scaleOverlayTransform(
+  transform: OverlayTransform,
+  nextScale: number,
+  previousScale: number,
+): OverlayTransform {
+  const ratio = nextScale / Math.max(previousScale, 0.001);
+  return {
+    ...transform,
+    width: Math.max(24, transform.width * ratio),
+    height: Math.max(24, transform.height * ratio),
+  };
+}
+
 async function loadOverlay(file: File): Promise<OverlayAsset> {
   const objectUrl = URL.createObjectURL(file);
   try {
@@ -128,8 +141,10 @@ export default function App() {
   const [overlayMode, setOverlayMode] = useState<OverlayMode | null>(null);
   const [overlay, setOverlay] = useState<OverlayAsset | null>(null);
   const [overlayTransform, setOverlayTransform] = useState<OverlayTransform | null>(null);
+  const [stickerScale, setStickerScale] = useState(1);
   const [textStyle, setTextStyle] = useState<TextOverlayStyle>(defaultTextStyle);
   const [textTransform, setTextTransform] = useState<OverlayTransform | null>(null);
+  const [textScale, setTextScale] = useState(1);
   const [blurStyle, setBlurStyle] = useState<BlurStyle>(defaultBlurStyle);
   const [status, setStatus] = useState<StatusState>(idleStatus);
   const [error, setError] = useState<string | null>(null);
@@ -230,7 +245,9 @@ export default function App() {
     setTrackingFrames(null);
     setOverlayMode(null);
     setOverlayTransform(null);
+    setStickerScale(1);
     setTextTransform(null);
+    setTextScale(1);
   };
 
   const resetAll = () => {
@@ -242,8 +259,10 @@ export default function App() {
     setOverlayMode(null);
     setOverlay(null);
     setOverlayTransform(null);
+    setStickerScale(1);
     setTextStyle(defaultTextStyle);
     setTextTransform(null);
+    setTextScale(1);
     setBlurStyle(defaultBlurStyle);
     setStatus(idleStatus);
     setError(null);
@@ -356,6 +375,7 @@ export default function App() {
     if (mode === 'text') {
       setTextStyle((s) => ({ ...s, enabled: true }));
       if (gif && targetRect && !textTransform) {
+        setTextScale(1);
         setTextTransform(getDefaultTextTransform(gif, targetRect));
       }
     } else {
@@ -372,6 +392,7 @@ export default function App() {
       if (overlay?.objectUrl) URL.revokeObjectURL(overlay.objectUrl);
       setOverlay(asset);
       if (gif && targetRect) {
+        setStickerScale(1);
         setOverlayTransform(getDefaultOverlayTransform(gif, asset, targetRect));
       }
       setStep('export');
@@ -384,6 +405,7 @@ export default function App() {
     if (overlay?.objectUrl) URL.revokeObjectURL(overlay.objectUrl);
     setOverlay(asset);
     if (gif && targetRect) {
+      setStickerScale(1);
       setOverlayTransform(getDefaultOverlayTransform(gif, asset, targetRect));
     }
     setStep('export');
@@ -540,13 +562,32 @@ export default function App() {
               onModeChange={handleModeChange}
               onStickerUpload={handleStickerUpload}
               onPresetPick={handlePresetPick}
+              stickerScale={stickerScale}
+              onStickerScaleChange={(nextScale) => {
+                setStickerScale((previousScale) => {
+                  if (overlayTransform) {
+                    setOverlayTransform(scaleOverlayTransform(overlayTransform, nextScale, previousScale));
+                  }
+                  return nextScale;
+                });
+              }}
               textStyle={textStyle}
               onTextStyleChange={(s) => {
                 setTextStyle(s);
                 if (gif && targetRect && !textTransform) {
+                  setTextScale(1);
                   setTextTransform(getDefaultTextTransform(gif, targetRect));
                 }
                 setStep('export');
+              }}
+              textScale={textScale}
+              onTextScaleChange={(nextScale) => {
+                setTextScale((previousScale) => {
+                  if (textTransform) {
+                    setTextTransform(scaleOverlayTransform(textTransform, nextScale, previousScale));
+                  }
+                  return nextScale;
+                });
               }}
               blurStyle={blurStyle}
               onBlurStyleChange={(s) => {
@@ -573,12 +614,31 @@ export default function App() {
                 onModeChange={handleModeChange}
                 onStickerUpload={handleStickerUpload}
                 onPresetPick={handlePresetPick}
+                stickerScale={stickerScale}
+                onStickerScaleChange={(nextScale) => {
+                  setStickerScale((previousScale) => {
+                    if (overlayTransform) {
+                      setOverlayTransform(scaleOverlayTransform(overlayTransform, nextScale, previousScale));
+                    }
+                    return nextScale;
+                  });
+                }}
                 textStyle={textStyle}
                 onTextStyleChange={(s) => {
                   setTextStyle(s);
                   if (gif && targetRect && !textTransform) {
+                    setTextScale(1);
                     setTextTransform(getDefaultTextTransform(gif, targetRect));
                   }
+                }}
+                textScale={textScale}
+                onTextScaleChange={(nextScale) => {
+                  setTextScale((previousScale) => {
+                    if (textTransform) {
+                      setTextTransform(scaleOverlayTransform(textTransform, nextScale, previousScale));
+                    }
+                    return nextScale;
+                  });
                 }}
                 blurStyle={blurStyle}
                 onBlurStyleChange={setBlurStyle}

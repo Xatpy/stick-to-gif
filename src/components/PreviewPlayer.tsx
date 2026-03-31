@@ -12,6 +12,11 @@ interface PreviewPlayerProps {
   progressValue?: number;
 }
 
+function getRangeProgressStyle(value: number, min: number, max: number) {
+  const progress = ((value - min) / (max - min)) * 100;
+  return { '--range-progress': `${progress}%` } as React.CSSProperties;
+}
+
 export function PreviewPlayer({
   gif,
   overlay,
@@ -158,6 +163,7 @@ export function PreviewPlayer({
           min={0}
           max={gif.frames.length - 1}
           value={frameIndex}
+          style={getRangeProgressStyle(frameIndex, 0, Math.max(gif.frames.length - 1, 1))}
           onChange={(e) => setFrameIndex(Number(e.target.value))}
         />
         <span className="playback-bar__frame">

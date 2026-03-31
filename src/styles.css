@@ -602,6 +602,80 @@ button, input, textarea, select { font: inherit; }
   gap: 10px;
 }
 
+.overlay-scale {
+  display: grid;
+  gap: 6px;
+}
+
+.overlay-scale span {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.overlay-scale input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 24px;
+  background: transparent;
+}
+
+.overlay-scale input[type="range"]::-webkit-slider-runnable-track,
+.blur-slider input[type="range"]::-webkit-slider-runnable-track,
+.playback-bar input[type="range"]::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    #9f5d39 0,
+    #9f5d39 var(--range-progress, 50%),
+    rgba(64, 52, 45, 0.12) var(--range-progress, 50%),
+    rgba(64, 52, 45, 0.12) 100%
+  );
+  border: 1px solid rgba(99, 88, 79, 0.12);
+}
+
+.overlay-scale input[type="range"]::-webkit-slider-thumb,
+.blur-slider input[type="range"]::-webkit-slider-thumb,
+.playback-bar input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -8px;
+  border-radius: 50%;
+  background: #9f5d39;
+  border: 2px solid #fffdfa;
+  box-shadow: 0 2px 8px rgba(64, 52, 45, 0.18);
+}
+
+.overlay-scale input[type="range"]::-moz-range-track,
+.blur-slider input[type="range"]::-moz-range-track,
+.playback-bar input[type="range"]::-moz-range-track {
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    #9f5d39 0,
+    #9f5d39 var(--range-progress, 50%),
+    rgba(64, 52, 45, 0.12) var(--range-progress, 50%),
+    rgba(64, 52, 45, 0.12) 100%
+  );
+  border: 1px solid rgba(99, 88, 79, 0.12);
+}
+
+.overlay-scale input[type="range"]::-moz-range-thumb,
+.blur-slider input[type="range"]::-moz-range-thumb,
+.playback-bar input[type="range"]::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #9f5d39;
+  border: 2px solid #fffdfa;
+  box-shadow: 0 2px 8px rgba(64, 52, 45, 0.18);
+}
+
 .overlay-upload-btn {
   display: inline-grid;
   place-items: center;

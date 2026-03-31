@@ -9,9 +9,13 @@ interface OverlayPickerProps {
   /* Sticker */
   onStickerUpload: (file: File) => void;
   onPresetPick: (asset: OverlayAsset) => void;
+  stickerScale: number;
+  onStickerScaleChange: (scale: number) => void;
   /* Text */
   textStyle: TextOverlayStyle;
   onTextStyleChange: (style: TextOverlayStyle) => void;
+  textScale: number;
+  onTextScaleChange: (scale: number) => void;
   /* Blur */
   blurStyle: BlurStyle;
   onBlurStyleChange: (style: BlurStyle) => void;
@@ -34,13 +38,22 @@ const CUSTOM_EMOJI_OPTIONS = [
   '🎉', '🚀', '🍿', '🧠', '🎯', '👑',
 ];
 
+function getRangeProgressStyle(value: number, min: number, max: number) {
+  const progress = ((value - min) / (max - min)) * 100;
+  return { '--range-progress': `${progress}%` } as React.CSSProperties;
+}
+
 export function OverlayPicker({
   mode,
   onModeChange,
   onStickerUpload,
   onPresetPick,
+  stickerScale,
+  onStickerScaleChange,
   textStyle,
   onTextStyleChange,
+  textScale,
+  onTextScaleChange,
   blurStyle,
   onBlurStyleChange,
 }: OverlayPickerProps) {
@@ -106,6 +119,18 @@ export function OverlayPicker({
                 Pick emoji
               </button>
             </div>
+            <label className="overlay-scale">
+              <span>Sticker size</span>
+              <input
+                type="range"
+                min={0.6}
+                max={1.8}
+                step={0.05}
+                value={stickerScale}
+                style={getRangeProgressStyle(stickerScale, 0.6, 1.8)}
+                onChange={(e) => onStickerScaleChange(Number(e.target.value))}
+              />
+            </label>
             <div className="preset-grid">
               {presets.map((preset) => (
                 <button
@@ -143,6 +168,18 @@ export function OverlayPicker({
               value={textStyle.text}
               onChange={(e) => onTextStyleChange({ ...textStyle, text: e.target.value })}
             />
+            <label className="overlay-scale">
+              <span>Text size</span>
+              <input
+                type="range"
+                min={0.6}
+                max={1.8}
+                step={0.05}
+                value={textScale}
+                style={getRangeProgressStyle(textScale, 0.6, 1.8)}
+                onChange={(e) => onTextScaleChange(Number(e.target.value))}
+              />
+            </label>
             <div className="text-options-row">
               <div className="swatch-row">
                 {TEXT_SWATCHES.map((swatch) => (
@@ -196,6 +233,7 @@ export function OverlayPicker({
                 max={1}
                 step={0.05}
                 value={blurStyle.intensity}
+                style={getRangeProgressStyle(blurStyle.intensity, 0, 1)}
                 onChange={(e) => onBlurStyleChange({ intensity: Number(e.target.value) })}
               />
             </label>
