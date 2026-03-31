@@ -6,6 +6,7 @@ import {
   clamp,
   clampRectToBounds,
 } from '../utils/math';
+import { refreshTrackedFeaturePoints } from './featurePoints';
 import { extractPoints, estimateMotion, MotionEstimate } from './motion';
 import type { Rect, TrackedRegion, OverlayTransform, TrackingFrame } from '../types';
 import { buildOverlayFromRegion, computeOverlayLayout } from './overlayLayout';
@@ -535,6 +536,13 @@ self.onmessage = async (e: MessageEvent<any>) => {
               positionAlpha,
             );
           }
+
+          featurePoints = refreshTrackedFeaturePoints(
+            featurePoints,
+            currentGray,
+            nextRegion,
+            (gray, regionToTrack) => detectFeaturePoints(cv, gray, regionToTrack),
+          );
         } else {
           const templateConfidence = templateMotion?.confidence ?? 0;
           confidence = Math.max(

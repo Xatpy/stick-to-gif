@@ -455,7 +455,7 @@ export default function App() {
     switch (step) {
       case 'input':
         return (
-          <div className="sidebar__step">
+          <div className="sidebar__step" data-step="input">
             <DropZone
               onFileSelected={handleGifUpload}
               onPasteUrl={handlePasteUrl}
@@ -467,7 +467,7 @@ export default function App() {
 
       case 'pick-subject':
         return (
-          <div className="sidebar__step">
+          <div className="sidebar__step" data-step="pick-subject">
             <div className="step-nav">
               <button type="button" className="step-nav__back" onClick={handleBack} disabled={isBusy}>
                 <span aria-hidden="true">←</span>
@@ -494,7 +494,7 @@ export default function App() {
 
       case 'tracking':
         return (
-          <div className="sidebar__step">
+          <div className="sidebar__step" data-step="tracking">
             <div className="step-nav">
               <button type="button" className="step-nav__back" onClick={handleBack} disabled>
                 <span aria-hidden="true">←</span>
@@ -512,7 +512,7 @@ export default function App() {
 
       case 'overlay':
         return (
-          <div className="sidebar__step">
+          <div className="sidebar__step" data-step="overlay">
             <div className="step-nav">
               <button type="button" className="step-nav__back" onClick={handleBack} disabled={isBusy}>
                 <span aria-hidden="true">←</span>
@@ -543,7 +543,7 @@ export default function App() {
 
       case 'export':
         return (
-          <div className="sidebar__step">
+          <div className="sidebar__step" data-step="export">
             <div className="step-nav">
               <button type="button" className="step-nav__back" onClick={handleBack} disabled={isBusy}>
                 <span aria-hidden="true">←</span>

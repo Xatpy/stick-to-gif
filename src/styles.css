@@ -811,6 +811,21 @@ button, input, textarea, select { font: inherit; }
     border-top: 1px solid rgba(99, 88, 79, 0.1);
   }
 
+  .sidebar__step[data-step="export"] {
+    padding-bottom: calc(132px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .sidebar__step[data-step="export"] .export-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    margin: 0 -16px;
+    padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+    background: var(--surface);
+    border-top: 1px solid rgba(99, 88, 79, 0.1);
+    box-shadow: 0 -10px 24px rgba(32, 28, 24, 0.06);
+  }
+
   .stepper {
     order: 4;
     grid-template-columns: repeat(4, minmax(0, 1fr));
