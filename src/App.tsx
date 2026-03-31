@@ -912,7 +912,7 @@ export default function App() {
         <div className="prose">
           <p><strong>StickToGif</strong> is a fast, local tool to pin an image, text, or a blur effect onto a moving object inside a short animation.</p>
           <ol>
-            <li><strong>Input:</strong> Drop a GIF or MP4, or paste a GIF URL to get started.</li>
+            <li><strong>Input:</strong> Drop a GIF, MP4, or MOV, or paste a GIF URL to get started.</li>
             <li><strong>Pick Subject:</strong> Tap or click on the object you want to track. A tracking box will appear. Drag its corners to resize it exactly around the subject.</li>
             <li><strong>Track:</strong> Hit Track. The engine runs locally in your browser to follow the object frame-by-frame.</li>
             <li><strong>Overlay:</strong> Choose between a Sticker, Text, or Blur effect. The app instantly attaches it to the tracked motion.</li>

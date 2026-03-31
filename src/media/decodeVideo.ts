@@ -17,7 +17,7 @@ function waitForEvent(target: EventTarget, eventName: string) {
     };
     const handleReject = () => {
       cleanup();
-      reject(new Error('This MP4 could not be decoded in this browser.'));
+      reject(new Error('This video could not be decoded in this browser.'));
     };
     const cleanup = () => {
       target.removeEventListener(eventName, handleResolve);
@@ -59,7 +59,7 @@ export async function decodeVideo(
   { onProgress }: DecodeVideoOptions = {},
 ): Promise<DecodedGif> {
   if (file.size > MAX_VIDEO_BYTES) {
-    throw new Error('MP4 files must be 30 MB or smaller.');
+    throw new Error('Video files must be 30 MB or smaller.');
   }
 
   const objectUrl = URL.createObjectURL(file);
@@ -72,19 +72,19 @@ export async function decodeVideo(
   try {
     onProgress?.({
       progress: 0.12,
-      message: 'Reading MP4 metadata',
+      message: 'Reading video metadata',
     });
 
     await waitForEvent(video, 'loadedmetadata');
 
     if (!Number.isFinite(video.duration) || video.duration <= 0) {
-      throw new Error('This MP4 does not contain a readable duration.');
+      throw new Error('This video does not contain a readable duration.');
     }
     if (video.duration > MAX_VIDEO_DURATION_SECONDS) {
-      throw new Error('MP4 clips must be 15 seconds or shorter.');
+      throw new Error('Video clips must be 15 seconds or shorter.');
     }
     if (video.videoWidth <= 0 || video.videoHeight <= 0) {
-      throw new Error('This MP4 does not contain readable video dimensions.');
+      throw new Error('This video does not contain readable video dimensions.');
     }
 
     onProgress?.({
@@ -106,7 +106,7 @@ export async function decodeVideo(
     const context = canvas.getContext('2d', { willReadFrequently: true });
 
     if (!context) {
-      throw new Error('Unable to create a canvas for MP4 decoding.');
+      throw new Error('Unable to create a canvas for video decoding.');
     }
 
     const frames: DecodedGif['frames'] = [];
@@ -129,7 +129,7 @@ export async function decodeVideo(
 
       onProgress?.({
         progress: 0.18 + ((index + 1) / frameCount) * 0.78,
-        message: `Sampling MP4 frames ${index + 1}/${frameCount}`,
+        message: `Sampling video frames ${index + 1}/${frameCount}`,
       });
 
       if (index % 5 === 0) {

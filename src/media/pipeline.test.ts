@@ -101,12 +101,12 @@ describe('media pipeline', () => {
     }
   });
 
-  it('rejects MP4 files over the size limit', async () => {
+  it('rejects video files over the size limit', async () => {
     const file = new File([new Uint8Array(30 * 1024 * 1024 + 1)], 'big.mp4', {
       type: 'video/mp4',
     });
 
-    await expect(decodeVideo(file)).rejects.toThrow('MP4 files must be 30 MB or smaller.');
+    await expect(decodeVideo(file)).rejects.toThrow('Video files must be 30 MB or smaller.');
   });
 
   it('surfaces an error for unreadable GIF input', async () => {
