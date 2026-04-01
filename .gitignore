@@ -4,6 +4,8 @@ test-results
 playwright-report
 .DS_Store
 **/.DS_Store
+.idea/
+**/.idea/
 .env
 .env.*
 *.jks
