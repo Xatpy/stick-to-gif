@@ -19,6 +19,10 @@
   --text-muted: #81736a;
   --teal: #55f0c0;
   --sidebar-width: 332px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
 }
 
 * { box-sizing: border-box; }
@@ -39,9 +43,14 @@ button, input, textarea, select { font: inherit; }
 /* ── Outer shell ──────────────────────────────────────────── */
 .app-shell {
   width: 100vw;
-  height: 100vh;
+  height: 100dvh;
+  min-height: 100dvh;
   margin: 0;
-  padding: 0;
+  padding:
+    var(--safe-top)
+    var(--safe-right)
+    var(--safe-bottom)
+    var(--safe-left);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -71,6 +80,25 @@ button, input, textarea, select { font: inherit; }
   border-bottom: 1px solid rgba(99, 88, 79, 0.08);
 }
 
+.mobile-topbar,
+.mobile-topbar.brand-bar {
+  display: none;
+}
+
+.brand-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: inherit;
+  text-decoration: none;
+}
+
 .brand-logo {
   display: block;
   height: 32px;
@@ -83,6 +111,12 @@ button, input, textarea, select { font: inherit; }
   letter-spacing: -0.02em;
   color: var(--primary-strong);
   font-family: "Avenir Next", "Segoe UI", sans-serif;
+}
+
+.brand-help-btn {
+  width: 32px;
+  height: 32px;
+  font-size: 0.85rem;
 }
 
 .sidebar__step {
@@ -103,9 +137,13 @@ button, input, textarea, select { font: inherit; }
   display: flex;
   align-items: center;
   gap: 10px;
+  border: none;
+  background: transparent;
+  padding: 0;
   color: var(--text-muted);
   font-size: 0.82rem;
   font-weight: 700;
+  text-align: left;
 }
 
 .stepper__dot {
@@ -127,6 +165,29 @@ button, input, textarea, select { font: inherit; }
 
 .stepper__item--current {
   color: #4e4139;
+}
+
+.stepper__item--done {
+  cursor: pointer;
+}
+
+.stepper__item--done:hover .stepper__dot,
+.stepper__item--done:focus-visible .stepper__dot {
+  border-color: rgba(85, 240, 192, 0.9);
+  background: rgba(85, 240, 192, 0.24);
+}
+
+.stepper__item--done:hover .stepper__label,
+.stepper__item--done:focus-visible .stepper__label {
+  color: #2a6b5a;
+}
+
+.stepper__item:disabled {
+  cursor: default;
+}
+
+.stepper__item:focus-visible {
+  outline: none;
 }
 
 .stepper__item--current .stepper__dot {
@@ -989,55 +1050,260 @@ button, input, textarea, select { font: inherit; }
 /* ── Responsive: mobile (< 768px) ─────────────────────────── */
 @media (max-width: 767px) {
   .app-shell {
-    min-height: 100vh;
-    height: auto;
-    overflow-y: auto;
+    min-height: 100dvh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  .mobile-topbar,
+  .mobile-topbar.brand-bar {
+    display: flex;
+    flex: 0 0 auto;
+    padding: 8px 10px 6px;
+    border-bottom: 1px solid rgba(99, 88, 79, 0.08);
+    background: var(--surface);
   }
 
   .product-frame {
     display: flex;
     flex-direction: column;
-    padding: 16px;
-    min-height: 100vh;
+    flex: 1 1 auto;
+    min-height: 0;
     height: auto;
-    overflow-y: visible;
+    overflow: hidden;
   }
 
-  /* Flatten structure to freely order elements top-to-bottom */
-  .sidebar, .main-area {
-    display: contents;
+  .sidebar {
+    order: 2;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    border-right: none;
+    border-top: 1px solid rgba(99, 88, 79, 0.1);
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
   }
 
-  /* 1. Logo and Help Button at Top */
-  .sidebar__brand {
+  .main-area {
     order: 1;
-    border: none;
-    padding: 0 4px 16px;
+    flex: 0 0 46%;
+    min-height: 220px;
+    max-height: 52%;
+    padding: 8px 10px 6px;
+  }
+
+  .sidebar__brand {
+    display: none;
   }
 
   .error-banner {
+    margin: 0;
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(218, 83, 69, 0.18);
+  }
+
+  .canvas-stage {
+    min-height: 0;
+    height: 100%;
+    padding: 4px;
+    border-radius: 14px;
+    width: 100%;
+  }
+
+  .canvas-stage canvas {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+  }
+
+  .canvas-meta, .playback-bar {
+    width: 100%;
+    justify-content: center;
+    padding: 6px 0 0;
+  }
+
+  .sidebar__step {
+    flex: 1 1 auto;
+    min-height: 0;
+    margin: 0;
+    padding: 6px 10px calc(6px + var(--safe-bottom));
+    border-top: 1px solid rgba(99, 88, 79, 0.08);
+    gap: 6px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+  }
+
+  .sidebar__step[data-step="export"] {
+    gap: 5px;
+  }
+
+  .sidebar__step[data-step="export"] .overlay-picker,
+  .sidebar__step[data-step="export"] .overlay-controls,
+  .sidebar__step[data-step="export"] .emoji-picker {
+    gap: 5px;
+  }
+
+  .sidebar__step[data-step="export"] .mode-btn {
+    min-height: 40px;
+    padding: 7px 6px;
+    font-size: 0.7rem;
+  }
+
+  .sidebar__step[data-step="export"] .text-input {
+    padding: 7px 9px;
+    font-size: 0.8rem;
+  }
+
+  .sidebar__step[data-step="export"] .swatch {
+    width: 36px;
+    height: 36px;
+  }
+
+  .sidebar__step[data-step="export"] .preset-btn {
+    min-height: 44px;
+    padding: 4px;
+  }
+
+  .sidebar__step[data-step="export"] .preset-btn canvas {
+    width: 30px;
+    height: 30px;
+  }
+
+  .sidebar__step[data-step="export"] .overlay-scale span,
+  .sidebar__step[data-step="export"] .blur-slider span {
+    font-size: 0.68rem;
+  }
+
+  .sidebar__step[data-step="export"] .button {
+    min-height: 40px;
+    padding: 8px 10px;
+    font-size: 0.78rem;
+  }
+
+  .sidebar__step[data-step="export"] .export-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: auto;
+  }
+
+  .sidebar__step[data-step="export"] .start-over-link {
+    font-size: 0.68rem;
+    padding-top: 0;
+  }
+
+  .stepper {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    margin-top: 0;
+    padding: 4px 10px 5px;
+  }
+
+  .stepper__item {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 3px;
+    font-size: 0.64rem;
+  }
+
+  .stepper__label {
+    line-height: 1.15;
+  }
+
+  .button {
+    min-height: 40px;
+    padding: 9px 12px;
+    font-size: 0.8rem;
+  }
+
+  .mode-btn {
+    min-height: 40px;
+    padding: 8px 6px;
+    font-size: 0.72rem;
+  }
+
+  .preset-btn {
+    min-height: 44px;
+    padding: 5px;
+  }
+
+  .preset-grid {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(72px, 1fr);
+    grid-template-columns: none;
+    gap: 6px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .preset-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .overlay-sticker-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .overlay-sticker-actions > :nth-child(1) {
     order: 2;
   }
 
-  /* 2a. Headline (Empty State -> bottom area) */
+  .overlay-sticker-actions > :nth-child(2) {
+    order: 1;
+  }
+
+  .emoji-picker__actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .emoji-picker__grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .playback-bar__btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 7px;
+  }
+
+  .playback-bar {
+    gap: 6px;
+    padding: 6px 2px;
+  }
+
+  .playback-bar__frame {
+    font-size: 0.7rem;
+  }
+
+  .drop-zone {
+    min-height: 92px;
+    padding: 12px 10px;
+    gap: 6px;
+  }
+
   .empty-canvas {
-    order: 2;
-    min-height: auto;
-    padding: 0;
-    margin: 0 0 10px;
+    min-height: 0;
     gap: 8px;
   }
 
   .empty-canvas__media {
-    min-height: auto;
-    padding: 0;
-    background: transparent;
-    border: none;
+    min-height: 0;
+    padding: 6px;
   }
 
   .empty-canvas__demo {
     width: 100%;
-    max-height: 280px;
+    max-height: 100%;
     aspect-ratio: auto;
     border-radius: 14px;
   }
@@ -1046,139 +1312,18 @@ button, input, textarea, select { font: inherit; }
     padding: 0 2px;
   }
 
-  /* 2b. DropZone (Empty State -> top large area) */
-  .product-frame--empty .sidebar__step {
-    order: 3;
-    flex: 0 0 auto;
-    display: flex;
-    padding: 0;
-    margin: 0;
-    border-top: none;
+  .input-sidebar {
+    gap: 7px;
   }
 
-  .product-frame--empty .input-sidebar {
-    width: 100%;
-    gap: 12px;
+  .input-sidebar__headline {
+    font-size: 1.05rem;
+    line-height: 1.02;
   }
 
-  .product-frame--empty .input-sidebar__headline {
-    font-size: 1.5rem;
-    line-height: 1.18;
-    text-align: left;
-  }
-
-  .product-frame--empty .drop-zone {
-    margin-bottom: 0;
-  }
-
-  /* 3. Canvas Box (Loaded State -> top large area) */
-  .canvas-stage {
-    order: 3;
-    flex: 0 0 auto;
-    min-height: auto;
-    padding: 8px; /* Slightly more padding for the gradient box */
-    border-radius: 16px;
-    width: 100%;
-  }
-
-  .canvas-stage canvas {
-    width: 100%;
-    height: auto;
-    max-height: none;
-  }
-
-  /* 3. Metadata or Playback underneath the Canvas */
-  .canvas-meta, .playback-bar {
-    order: 4;
-    width: 100%;
-    justify-content: center;
-    padding: 12px 0 6px;
-  }
-
-  /* 5. Bottom Sheet Controls (Loaded state -> bottom area) */
-  .sidebar__step {
-    order: 5;
-    margin: 0;
-    padding: 16px 0; 
-    border-top: 1px solid rgba(99, 88, 79, 0.1);
-  }
-
-  .sidebar__step[data-step="export"] {
-    padding-bottom: calc(132px + env(safe-area-inset-bottom, 0px));
-  }
-
-  .sidebar__step[data-step="export"] .export-actions {
-    position: sticky;
-    bottom: 0;
-    z-index: 5;
-    margin: 0 -16px;
-    padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px));
-    background: var(--surface);
-    border-top: 1px solid rgba(99, 88, 79, 0.1);
-    box-shadow: 0 -10px 24px rgba(32, 28, 24, 0.06);
-  }
-
-  .stepper {
-    order: 4;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 6px;
-    margin-top: 10px;
-    padding: 6px 0 14px;
-  }
-
-  .stepper__item {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 6px;
-    font-size: 0.72rem;
-  }
-
-  .stepper__label {
-    line-height: 1.15;
-  }
-
-  /* Ensure 44px tap targets for mobile */
-  .button {
-    min-height: 48px;
-    padding: 14px 20px;
-  }
-
-  .mode-btn {
-    min-height: 48px;
-    padding: 12px 8px;
-    font-size: 0.85rem;
-  }
-
-  .swatch {
-    width: 44px;
-    height: 44px;
-  }
-
-  .preset-btn {
-    min-height: 64px;
-  }
-
-  .overlay-sticker-actions {
-    grid-template-columns: 1fr;
-  }
-
-  .emoji-picker__actions {
-    grid-template-columns: 1fr;
-  }
-
-  .emoji-picker__grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-
-  .playback-bar__btn {
-    width: 48px;
-    height: 48px;
-  }
-
-  .drop-zone {
-    min-height: 140px;
-    padding: 20px 14px;
+  .privacy-badge {
+    font-size: 0.66rem;
+    padding: 5px 7px;
   }
 
   .text-controls__grid {
@@ -1187,21 +1332,86 @@ button, input, textarea, select { font: inherit; }
 
   .text-options-row {
     align-items: flex-start;
+    gap: 8px;
   }
 
   .swatch-row {
     justify-content: center;
+    gap: 4px;
   }
 
   .weight-toggle {
     align-self: flex-start;
+  }
+
+  .step-instruction {
+    font-size: 0.9rem;
+  }
+
+  .step-hint {
+    font-size: 0.76rem;
+    line-height: 1.25;
+  }
+
+  .overlay-picker,
+  .overlay-controls,
+  .emoji-picker {
+    gap: 6px;
+  }
+
+  .overlay-scale span,
+  .blur-slider span,
+  .step-nav__count {
+    font-size: 0.7rem;
+  }
+
+  .swatch {
+    width: 36px;
+    height: 36px;
+  }
+
+  .emoji-picker__option {
+    min-height: 38px;
+    font-size: 1.05rem;
+  }
+
+  .emoji-picker__preview {
+    min-height: 56px;
+    font-size: 1.9rem;
+  }
+
+  .start-over-link {
+    font-size: 0.7rem;
+  }
+
+  .weight-btn {
+    min-height: 40px;
+    padding: 8px 10px;
+  }
+
+  .text-style-btn {
+    min-height: 40px;
+    min-width: 88px;
+    padding: 8px 10px;
+  }
+
+  .export-actions > :nth-child(1) {
+    order: 2;
+  }
+
+  .export-actions > :nth-child(2) {
+    order: 1;
   }
 }
 @media (max-width: 520px) {
   .app-shell {
     width: 100vw;
     margin: 0;
-    padding: 0;
+    padding:
+      var(--safe-top)
+      var(--safe-right)
+      var(--safe-bottom)
+      var(--safe-left);
   }
 
   .preset-grid {

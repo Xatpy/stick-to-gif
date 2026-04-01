@@ -11,7 +11,7 @@ for (let f = 0; f < FRAMES; f++) {
   for (let i = 0; i < rgba.length; i += 4) {
     rgba[i] = 240; rgba[i + 1] = 237; rgba[i + 2] = 230; rgba[i + 3] = 255;
   }
-  // Bouncing red circle — good tracking target
+  // Bouncing red circle - good tracking target
   const t = f / FRAMES;
   const cx = 30 + Math.sin(t * Math.PI * 2) * 70 + 70;
   const cy = H / 2 + Math.sin(t * Math.PI * 4) * 20;

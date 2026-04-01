@@ -1,0 +1,25 @@
+{
+  "name": "StickToGif",
+  "short_name": "StickToGif",
+  "description": "Tracked stickers for your GIFs. Runs entirely on your device.",
+  "start_url": "/stick-to-gif/",
+  "scope": "/stick-to-gif/",
+  "display": "standalone",
+  "background_color": "#f0ede6",
+  "theme_color": "#9f5d39",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

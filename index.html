@@ -1,31 +1,97 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/logo-192.png" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0"
-    />
-    <title>StickToGif — Tracked stickers for GIFs</title>
-    <meta
-      name="description"
-      content="Pin tracked stickers, text, or blur effects onto moving subjects in GIFs and MP4s. Runs entirely in your browser — no uploads, total privacy."
-    />
-    <meta property="og:title" content="StickToGif — Tracked stickers for your GIFs" />
-    <meta
-      property="og:description"
-      content="Pin tracked stickers, text, or blur effects onto moving subjects in GIFs and MP4s. Runs entirely in your browser — no uploads, total privacy."
-    />
-    <meta
-      property="og:image"
-      content="https://xatpy.github.io/stick-to-gif/demo.gif"
-    />
-    <meta property="og:type" content="website" />
-    <meta name="twitter:card" content="summary_large_image" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-  </html>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+  <title>StickToGif — Tracked Stickers for GIFs, Right on Your Device</title>
+  <meta
+    name="description"
+    content="Pin tracked stickers, text, or blur effects onto moving subjects in animated GIFs and MP4 clips. Runs entirely in your browser — no uploads, no account, no watermark. Free forever."
+  />
+  <meta
+    name="keywords"
+    content="gif sticker tracker, motion tracking gif, add sticker to gif, blur face gif, gif editor no upload, tracked emoji gif, meme maker, gif overlay, privacy gif editor"
+  />
+  <meta name="author" content="StickToGif" />
+  <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#9f5d39" />
+  <link rel="canonical" href="https://xatpy.github.io/stick-to-gif/" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="StickToGif" />
+  <meta property="og:title" content="StickToGif — Tracked Stickers for GIFs" />
+  <meta
+    property="og:description"
+    content="Pin stickers, text, or blur to moving subjects in GIFs and MP4s. Runs entirely in your browser. No uploads, no account, no watermark."
+  />
+  <meta property="og:image" content="https://xatpy.github.io/stick-to-gif/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta
+    property="og:image:alt"
+    content="StickToGif logo and interface branding for tracked sticker editing in GIFs"
+  />
+  <meta property="og:url" content="https://xatpy.github.io/stick-to-gif/" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="StickToGif — Tracked Stickers for GIFs" />
+  <meta
+    name="twitter:description"
+    content="Pin stickers to moving subjects in GIFs. Runs in your browser, nothing uploaded."
+  />
+  <meta name="twitter:image" content="https://xatpy.github.io/stick-to-gif/og-image.png" />
+  <meta
+    name="twitter:image:alt"
+    content="StickToGif logo and interface branding for tracked sticker editing in GIFs"
+  />
+
+  <link rel="manifest" href="/stick-to-gif/manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="StickToGif" />
+  <link rel="apple-touch-icon" href="/stick-to-gif/icon-192.png" />
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/stick-to-gif/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/stick-to-gif/favicon-16.png" />
+  <link rel="icon" type="image/png" href="/stick-to-gif/favicon.png" />
+
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "StickToGif",
+      "url": "https://xatpy.github.io/stick-to-gif/",
+      "description": "Pin tracked stickers, text, or blur effects onto moving subjects in animated GIFs and MP4 clips. Runs entirely in the browser with no uploads.",
+      "applicationCategory": "MultimediaApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "Motion tracking with optical flow",
+        "Sticker overlay on GIF",
+        "Face blur for GIF",
+        "Local processing, no uploads",
+        "GIF and WebP export",
+        "MP4 input support"
+      ],
+      "screenshot": "https://xatpy.github.io/stick-to-gif/og-image.png",
+      "softwareVersion": "0.1.0",
+      "author": {
+        "@type": "Organization",
+        "name": "StickToGif"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>

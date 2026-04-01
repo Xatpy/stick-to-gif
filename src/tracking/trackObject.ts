@@ -10,6 +10,7 @@ import type {
 import TrackerWorker from './tracker.worker?worker';
 import type { TrackerConfig } from './tracker.worker';
 import { isInternalDebugEnabled } from '../lib/internalDebug';
+import { getAbsoluteAppAssetUrl, getRuntimePlatform } from '../lib/platform';
 
 export { computeOverlayLayout, buildOverlayFromRegion } from './overlayLayout';
 
@@ -50,11 +51,13 @@ export async function trackObject({
     height: gif.height,
     initialRegion,
     baseUrl: import.meta.env.BASE_URL,
+    openCvUrl: getAbsoluteAppAssetUrl('opencv.js'),
+    platform: getRuntimePlatform(),
   });
   emitDebug(
     debugReporter,
     'info',
-    `Track requested for ${gif.frames.length} frames at ${gif.width}x${gif.height} via Web Worker.`,
+    `Track requested for ${gif.frames.length} frames at ${gif.width}x${gif.height} via Web Worker on ${getRuntimePlatform()}.`,
   );
 
   return new Promise((resolve, reject) => {
@@ -116,12 +119,12 @@ export async function trackObject({
         emitDebug(debugReporter, 'error', `Worker failed to load or crashed: ${e.message}`);
         verboseError('[StickToGif] worker.onerror', e);
         worker.terminate();
-        reject(new Error('Tracker worker crashed or failed to load.'));
+        reject(new Error(`Tracker worker crashed or failed to load on ${getRuntimePlatform()}.`));
       };
 
       // Construct and post config
       const config: TrackerConfig = {
-        baseUrl: import.meta.env.BASE_URL,
+        openCvUrl: getAbsoluteAppAssetUrl('opencv.js'),
         debugLogging: verboseLogging,
         frames: gif.frames.map((f) => f.blob),
         width: gif.width,
@@ -133,7 +136,7 @@ export async function trackObject({
       };
 
       verboseLog('[StickToGif] posting CMD_START', {
-        baseUrl: config.baseUrl,
+        openCvUrl: config.openCvUrl,
         frameCount: config.frames.length,
         textEnabled: config.textEnabled,
       });

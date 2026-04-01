@@ -58,8 +58,8 @@ function finalizeOpenCvModule(module: OpenCvReadyModule): CvModule {
 
 // Load OpenCV in the worker
 let cvReady: Promise<CvModule> | null = null;
-function loadOpenCvWorker(baseUrl: string): Promise<CvModule> {
-  workerLog('[StickToGif worker] loadOpenCvWorker', { baseUrl, hasExistingPromise: !!cvReady });
+function loadOpenCvWorker(openCvUrl: string): Promise<CvModule> {
+  workerLog('[StickToGif worker] loadOpenCvWorker', { openCvUrl, hasExistingPromise: !!cvReady });
   if (!cvReady) {
     cvReady = new Promise((resolve, reject) => {
       let settled = false;
@@ -110,7 +110,7 @@ function loadOpenCvWorker(baseUrl: string): Promise<CvModule> {
         return true;
       };
 
-      const scriptUrl = `${baseUrl}opencv.js`;
+      const scriptUrl = openCvUrl;
       workerLog('[StickToGif worker] scriptUrl', scriptUrl);
       const timeoutId = self.setTimeout(() => {
         fail(new Error('OpenCV took too long to initialize inside the worker.'));
@@ -165,7 +165,7 @@ function loadOpenCvWorker(baseUrl: string): Promise<CvModule> {
 }
 
 export interface TrackerConfig {
-  baseUrl: string;
+  openCvUrl: string;
   debugLogging: boolean;
   frames: Blob[];
   width: number;
@@ -321,7 +321,7 @@ self.onmessage = async (e: MessageEvent<any>) => {
   if (e.data.type !== 'CMD_START') return;
 
   const {
-    baseUrl,
+    openCvUrl,
     debugLogging,
     frames,
     width,
@@ -336,7 +336,7 @@ self.onmessage = async (e: MessageEvent<any>) => {
 
   try {
     workerLog('[StickToGif worker] CMD_START', {
-      baseUrl,
+      openCvUrl,
       frameCount: frames.length,
       width,
       height,
@@ -345,7 +345,7 @@ self.onmessage = async (e: MessageEvent<any>) => {
     });
     self.postMessage({ type: 'PROGRESS', progress: 0.03, message: 'Loading OpenCV runtime in worker' });
     workerLog('[StickToGif worker] awaiting loadOpenCvWorker');
-    const cv = await loadOpenCvWorker(baseUrl);
+    const cv = await loadOpenCvWorker(openCvUrl);
     workerLog('[StickToGif worker] OpenCV loaded, proceeding');
     self.postMessage({ type: 'PROGRESS', progress: 0.08, message: 'Preparing first frame for tracking' });
     workerLog('[StickToGif worker] posted PROGRESS 0.08');

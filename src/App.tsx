@@ -12,6 +12,12 @@ import { trackObject } from './tracking/trackObject';
 import { computeOverlayFrames } from './tracking/computeOverlays';
 import logoAsset from './assets/logo.png';
 import type { DebugEntry } from './lib/debug';
+import {
+  getAppAssetUrl,
+  getAppHomeHref,
+  isNativeMobilePlatform,
+} from './lib/platform';
+import { exportResultNatively } from './mobile/exportResult';
 import type {
   AppStep,
   BlurStyle,
@@ -186,7 +192,7 @@ async function loadRemoteFile(url: string) {
 }
 
 async function loadBundledSample() {
-  const response = await fetch(`${import.meta.env.BASE_URL}demo.gif`);
+  const response = await fetch(getAppAssetUrl('demo.gif'));
   if (!response.ok) {
     throw new Error('Unable to load the sample clip.');
   }
@@ -242,7 +248,14 @@ export default function App() {
     };
   }, []);
 
+  const isNativeMobile = isNativeMobilePlatform();
+
   useEffect(() => {
+    if (isNativeMobile) {
+      setPreferShareLabel(true);
+      return;
+    }
+
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
       return;
     }
@@ -258,7 +271,7 @@ export default function App() {
 
     mediaQuery.addListener(syncPreference);
     return () => mediaQuery.removeListener(syncPreference);
-  }, []);
+  }, [isNativeMobile]);
 
   const [firstFrame, setFirstFrame] = useState<ImageData | null>(null);
   const isExporting = status.stage === 'exporting';
@@ -317,7 +330,7 @@ export default function App() {
     if (overlayMode === 'text' && textStyle.enabled && textStyle.text.trim() && textTransform) {
       return computeOverlayFrames(trackingFrames, targetRect, textTransform, 'textOverlay');
     }
-    // Blur mode or no overlay — use raw tracking frames
+    // Blur mode or no overlay - use raw tracking frames
     return trackingFrames;
   })();
 
@@ -456,6 +469,24 @@ export default function App() {
     }
   };
 
+  const handleStepJump = (stepIndex: number) => {
+    if (isBusy || stepIndex >= activeFlowStep) return;
+
+    switch (stepIndex) {
+      case 0:
+        setStep('input');
+        break;
+      case 1:
+        setStep('pick-subject');
+        break;
+      case 2:
+        setStep('overlay');
+        break;
+      default:
+        break;
+    }
+  };
+
   const handleModeChange = (mode: OverlayMode) => {
     setOverlayMode(mode);
     if (mode === 'text') {
@@ -529,7 +560,14 @@ export default function App() {
 
       setStatus(idleStatus);
 
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      if (isNativeMobile) {
+        await exportResultNatively({
+          blob,
+          filename,
+          title: 'StickToGif export',
+          debugReporter: appendDebug,
+        });
+      } else if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
           await navigator.share({
             files: [file],
@@ -565,7 +603,7 @@ export default function App() {
         return (
           <div className="sidebar__step" data-step="input">
             <div className="input-sidebar">
-              <h1 className="input-sidebar__headline">Tracked stickers for your GIFs — right on your device.</h1>
+              <h1 className="input-sidebar__headline">Tracked stickers for your GIFs - right on your device.</h1>
               <div className="privacy-badge" role="note" aria-label="100 percent private, no uploads, instant processing">
                 <span className="privacy-badge__icon" aria-hidden="true">
                   <svg viewBox="0 0 24 24" focusable="false">
@@ -579,9 +617,10 @@ export default function App() {
               </button>
               <DropZone
                 onFileSelected={handleGifUpload}
-                onPasteUrl={handlePasteUrl}
+                onPasteUrl={isNativeMobile ? undefined : handlePasteUrl}
                 onError={setError}
-                label="or drop your own GIF / MP4"
+                label={isNativeMobile ? 'Choose a GIF, MP4, or MOV from your device' : 'or drop your own GIF / MP4'}
+                hint={isNativeMobile ? 'or tap to browse your device storage' : undefined}
                 compact
               />
             </div>
@@ -767,7 +806,7 @@ export default function App() {
           <div className="empty-canvas__media">
             <img
               className="empty-canvas__demo"
-              src={`${import.meta.env.BASE_URL}demo.gif`}
+              src={getAppAssetUrl('demo.gif')}
               alt="Demo GIF showing a sticker tracked onto a moving subject"
             />
           </div>
@@ -849,53 +888,80 @@ export default function App() {
 
   /* ── Render ────────────────────────────────────────────── */
 
+  const renderBrand = (className = 'sidebar__brand') => (
+    <div className={`${className} brand-bar`}>
+      <a
+        href={getAppHomeHref()}
+        className="brand-link"
+        aria-label="Go to StickToGif home"
+      >
+        <img src={logoAsset} alt="" className="brand-logo" />
+        <span className="brand-text">StickToGif</span>
+      </a>
+      <button
+        type="button"
+        className="playback-bar__btn brand-help-btn"
+        onClick={() => setShowHelp(true)}
+        aria-label="Help"
+      >
+        ?
+      </button>
+    </div>
+  );
+
+  const renderStepper = () => (
+    <div className="stepper" aria-label="Progress">
+      {flowSteps.map((label, index) => {
+        const statusName =
+          index < activeFlowStep ? 'done' : index === activeFlowStep ? 'current' : 'upcoming';
+        const isJumpable = !isBusy && index < activeFlowStep;
+        return (
+          <button
+            key={label}
+            type="button"
+            className={`stepper__item stepper__item--${statusName}`}
+            aria-current={index === activeFlowStep ? 'step' : undefined}
+            aria-label={isJumpable ? `Go back to ${label}` : label}
+            disabled={!isJumpable}
+            onClick={() => handleStepJump(index)}
+          >
+            <span className="stepper__dot">{index + 1}</span>
+            <span className="stepper__label">{label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  const renderHelpModal = () => (
+    <Modal isOpen={showHelp} onClose={() => setShowHelp(false)} title="How to use StickToGif">
+      <div className="prose">
+        <p><strong>StickToGif</strong> is a fast, local tool to pin an image, text, or a blur effect onto a moving object inside a short animation.</p>
+        <ol>
+          <li><strong>Input:</strong> Choose a GIF, MP4, or MOV from your device{isNativeMobile ? '.' : ', or paste a GIF URL to get started.'}</li>
+          <li><strong>Pick Subject:</strong> Tap or click on the object you want to track. A tracking box will appear. Drag its corners to resize it exactly around the subject.</li>
+          <li><strong>Track:</strong> Hit Track. The engine runs locally on your device to follow the object frame-by-frame.</li>
+          <li><strong>Overlay:</strong> Choose between a Sticker, Text, or Blur effect. The app instantly attaches it to the tracked motion.</li>
+          <li><strong>Export:</strong> Save or share your final animated GIF or WebP directly from your device.</li>
+        </ol>
+        <p><em>Privacy: Everything runs entirely on your device. No files are uploaded or stored anywhere beyond local export files you choose to keep.</em></p>
+      </div>
+    </Modal>
+  );
+
   return (
     <main className="app-shell">
+      {renderBrand('mobile-topbar')}
       <div className={`product-frame ${step === 'input' ? 'product-frame--empty' : ''}`}>
         {/* Sidebar */}
         <aside className="sidebar">
-          <div className="sidebar__brand" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <a
-              href={import.meta.env.BASE_URL}
-              style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}
-              aria-label="Go to StickToGif home"
-            >
-              <img src={logoAsset} alt="" className="brand-logo" />
-              <span className="brand-text">StickToGif</span>
-            </a>
-            <button
-              type="button"
-              className="playback-bar__btn"
-              style={{ width: 32, height: 32, fontSize: '0.85rem' }}
-              onClick={() => setShowHelp(true)}
-              aria-label="Help"
-            >
-              ?
-            </button>
-          </div>
+          {renderBrand()}
           {error && (
             <div className="error-banner" role="alert">
               {error}
             </div>
           )}
-          {step !== 'input' && (
-            <div className="stepper" aria-label="Progress">
-              {flowSteps.map((label, index) => {
-                const statusName =
-                  index < activeFlowStep ? 'done' : index === activeFlowStep ? 'current' : 'upcoming';
-                return (
-                  <div
-                    key={label}
-                    className={`stepper__item stepper__item--${statusName}`}
-                    aria-current={index === activeFlowStep ? 'step' : undefined}
-                  >
-                    <span className="stepper__dot">{index + 1}</span>
-                    <span className="stepper__label">{label}</span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          {step !== 'input' && renderStepper()}
           {renderSidebar()}
         </aside>
 
@@ -907,20 +973,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* Help Modal */}
-      <Modal isOpen={showHelp} onClose={() => setShowHelp(false)} title="How to use StickToGif">
-        <div className="prose">
-          <p><strong>StickToGif</strong> is a fast, local tool to pin an image, text, or a blur effect onto a moving object inside a short animation.</p>
-          <ol>
-            <li><strong>Input:</strong> Drop a GIF, MP4, or MOV, or paste a GIF URL to get started.</li>
-            <li><strong>Pick Subject:</strong> Tap or click on the object you want to track. A tracking box will appear. Drag its corners to resize it exactly around the subject.</li>
-            <li><strong>Track:</strong> Hit Track. The engine runs locally in your browser to follow the object frame-by-frame.</li>
-            <li><strong>Overlay:</strong> Choose between a Sticker, Text, or Blur effect. The app instantly attaches it to the tracked motion.</li>
-            <li><strong>Export:</strong> Save your final animated GIF or WebP directly to your device!</li>
-          </ol>
-          <p><em>Privacy: Everything runs entirely in your browser. No files are uploaded or stored anywhere.</em></p>
-        </div>
-      </Modal>
+      {renderHelpModal()}
     </main>
   );
 }

@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">StickToGif Open Graph Image</title>
+  <desc id="desc">A promotional card for StickToGif showing the app logo, headline, privacy-first messaging, and a preview of tracked sticker editing.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f7f4ee"/>
+      <stop offset="100%" stop-color="#ebe4da"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e2eeed"/>
+      <stop offset="100%" stop-color="#d3dbe0"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#3b3029" flood-opacity="0.13"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="1140" cy="70" r="120" fill="#9f5d39" opacity="0.08"/>
+  <circle cx="1020" cy="590" r="170" fill="#55f0c0" opacity="0.08"/>
+  <circle cx="90" cy="530" r="150" fill="#9f5d39" opacity="0.05"/>
+
+  <g transform="translate(72 70)">
+    <rect x="0" y="0" width="94" height="94" rx="24" fill="#fffdfa" stroke="#d7cdbf" stroke-width="3"/>
+    <image href="logo-512.png" x="7" y="7" width="80" height="80" preserveAspectRatio="xMidYMid meet"/>
+
+    <text x="122" y="56" fill="#a45a37" font-size="34" font-weight="900" font-family="Avenir Next, Segoe UI, Arial, sans-serif">StickToGif</text>
+    <text x="0" y="172" fill="#3e332c" font-size="58" font-weight="900" font-family="Georgia, Iowan Old Style, serif">Tracked stickers</text>
+    <text x="0" y="234" fill="#3e332c" font-size="58" font-weight="900" font-family="Georgia, Iowan Old Style, serif">for GIFs, right</text>
+    <text x="0" y="296" fill="#3e332c" font-size="58" font-weight="900" font-family="Georgia, Iowan Old Style, serif">on your device.</text>
+
+    <text x="0" y="364" fill="#6e6158" font-size="22" font-weight="600" font-family="Avenir Next, Segoe UI, Arial, sans-serif">
+      Pin stickers, text, or blur to moving subjects.
+    </text>
+    <text x="0" y="396" fill="#6e6158" font-size="22" font-weight="600" font-family="Avenir Next, Segoe UI, Arial, sans-serif">
+      Runs entirely in your browser.
+    </text>
+    <text x="0" y="428" fill="#6e6158" font-size="22" font-weight="600" font-family="Avenir Next, Segoe UI, Arial, sans-serif">
+      No uploads. No account. No watermark. Free forever.
+    </text>
+
+    <g transform="translate(0 482)">
+      <rect x="0" y="0" width="230" height="52" rx="26" fill="#def5eb" stroke="#a6eed6" stroke-width="2"/>
+      <text x="115" y="34" text-anchor="middle" fill="#2f715f" font-size="24" font-weight="800" font-family="Avenir Next, Segoe UI, Arial, sans-serif">100% private</text>
+
+      <rect x="246" y="0" width="184" height="52" rx="26" fill="#fffdfa" stroke="#d8cec1" stroke-width="2"/>
+      <text x="338" y="34" text-anchor="middle" fill="#6b5a50" font-size="23" font-weight="800" font-family="Avenir Next, Segoe UI, Arial, sans-serif">GIF/WebP export</text>
+
+      <rect x="446" y="0" width="152" height="52" rx="26" fill="#fffdfa" stroke="#d8cec1" stroke-width="2"/>
+      <text x="522" y="34" text-anchor="middle" fill="#6b5a50" font-size="23" font-weight="800" font-family="Avenir Next, Segoe UI, Arial, sans-serif">MP4 import</text>
+    </g>
+  </g>
+
+  <g transform="translate(690 58)" filter="url(#shadow)">
+    <rect x="0" y="0" width="438" height="514" rx="34" fill="#fffdfa" stroke="#ddd3c7" stroke-width="3"/>
+    <rect x="0" y="0" width="438" height="48" rx="34" fill="#f5efe6"/>
+    <circle cx="34" cy="24" r="6" fill="#d9b4a4"/>
+    <circle cx="54" cy="24" r="6" fill="#eddba1"/>
+    <circle cx="74" cy="24" r="6" fill="#a4dbc0"/>
+    <text x="112" y="31" fill="#7f7268" font-size="17" font-weight="700" font-family="Avenir Next, Segoe UI, Arial, sans-serif">StickToGif editor</text>
+
+    <g transform="translate(26 70)">
+      <rect x="0" y="0" width="386" height="250" rx="26" fill="url(#panel)" stroke="#d0d7dc" stroke-width="2"/>
+      <rect x="28" y="24" width="330" height="202" rx="18" fill="#f9f6f1" stroke="#d8d1c4" stroke-width="2"/>
+      <image href="demo.gif" x="82" y="28" width="222" height="194" preserveAspectRatio="xMidYMid meet"/>
+      <rect x="252" y="168" width="80" height="46" rx="23" fill="#9f5d39"/>
+      <text x="292" y="197" text-anchor="middle" fill="#fffdfa" font-size="20" font-weight="900" font-family="Avenir Next, Segoe UI, Arial, sans-serif">+Sticker</text>
+    </g>
+
+    <g transform="translate(28 344)">
+      <rect x="0" y="0" width="184" height="56" rx="22" fill="#f0fbf7" stroke="#8be4c5" stroke-width="3"/>
+      <text x="92" y="35" text-anchor="middle" fill="#2f715f" font-size="22" font-weight="900" font-family="Avenir Next, Segoe UI, Arial, sans-serif">Pick subject</text>
+
+      <rect x="198" y="0" width="184" height="56" rx="22" fill="#fffdfa" stroke="#ddd1c4" stroke-width="2"/>
+      <text x="290" y="35" text-anchor="middle" fill="#6b5a50" font-size="22" font-weight="900" font-family="Avenir Next, Segoe UI, Arial, sans-serif">Choose effect</text>
+    </g>
+
+    <g transform="translate(28 420)">
+      <rect x="0" y="0" width="386" height="58" rx="29" fill="#9f5d39"/>
+      <text x="193" y="37" text-anchor="middle" fill="#fffdfa" font-size="25" font-weight="900" font-family="Avenir Next, Segoe UI, Arial, sans-serif">No uploads · Free forever</text>
+    </g>
+  </g>
+</svg>

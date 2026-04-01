@@ -78,6 +78,31 @@ npm run build
 npm run preview
 ```
 
+Mobile/Capacitor workflow:
+
+```bash
+npm run check:mobile-secrets
+npm run build:mobile
+npm run cap:sync
+npm run cap:ios
+npm run cap:android
+```
+
+Mobile versioning:
+
+```bash
+npm run version:bump:patch
+npm run version:bump:minor
+npm run version:bump:major
+```
+
+`package.json` is the source of truth. Version bumps automatically sync:
+
+- Android `versionName`
+- Android `versionCode`
+- iOS `MARKETING_VERSION`
+- iOS `CURRENT_PROJECT_VERSION`
+
 ## Notes
 
 - OpenCV is lazy-loaded so the heavy tracking dependency only downloads when needed.
