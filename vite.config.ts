@@ -1,11 +1,12 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ command, mode }) => {
   const isMobileBuild = mode === 'mobile';
+  const isDevServer = command === 'serve';
 
   return {
-    base: isMobileBuild ? './' : '/stick-to-gif/',
+    base: isDevServer ? '/' : isMobileBuild ? './' : '/stick-to-gif/',
     plugins: [react()],
   };
 });
