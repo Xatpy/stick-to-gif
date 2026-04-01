@@ -14,10 +14,6 @@ function isMp4File(file: File) {
   return file.type === 'video/mp4' || file.name.toLowerCase().endsWith('.mp4');
 }
 
-function isMovFile(file: File) {
-  return file.type === 'video/quicktime' || file.name.toLowerCase().endsWith('.mov');
-}
-
 export async function decodeSource(
   file: File,
   { onProgress }: DecodeSourceOptions = {},
@@ -30,9 +26,9 @@ export async function decodeSource(
     return decodeGif(file);
   }
 
-  if (isMp4File(file) || isMovFile(file)) {
+  if (isMp4File(file)) {
     return decodeVideo(file, { onProgress });
   }
 
-  throw new Error('Please select an animated GIF, MP4, or MOV file.');
+  throw new Error('Please select an animated GIF or MP4 file.');
 }

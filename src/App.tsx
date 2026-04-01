@@ -617,9 +617,9 @@ export default function App() {
               </button>
               <DropZone
                 onFileSelected={handleGifUpload}
-                onPasteUrl={isNativeMobile ? undefined : handlePasteUrl}
+                onPasteUrl={handlePasteUrl}
                 onError={setError}
-                label={isNativeMobile ? 'Choose a GIF, MP4, or MOV from your device' : 'or drop your own GIF / MP4'}
+                label={isNativeMobile ? 'Choose a GIF or MP4 from your device' : 'or drop your own GIF / MP4'}
                 hint={isNativeMobile ? 'or tap to browse your device storage' : undefined}
                 compact
               />
@@ -938,7 +938,7 @@ export default function App() {
       <div className="prose">
         <p><strong>StickToGif</strong> is a fast, local tool to pin an image, text, or a blur effect onto a moving object inside a short animation.</p>
         <ol>
-          <li><strong>Input:</strong> Choose a GIF, MP4, or MOV from your device{isNativeMobile ? '.' : ', or paste a GIF URL to get started.'}</li>
+          <li><strong>Input:</strong> Choose a GIF or MP4 from your device, or paste a GIF URL to get started.</li>
           <li><strong>Pick Subject:</strong> Tap or click on the object you want to track. A tracking box will appear. Drag its corners to resize it exactly around the subject.</li>
           <li><strong>Track:</strong> Hit Track. The engine runs locally on your device to follow the object frame-by-frame.</li>
           <li><strong>Overlay:</strong> Choose between a Sticker, Text, or Blur effect. The app instantly attaches it to the tracked motion.</li>

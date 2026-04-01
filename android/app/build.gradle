@@ -13,14 +13,14 @@ def envKeyPassword = System.getenv('ANDROID_KEY_PASSWORD')
 def hasPrivateSigningConfig = keystorePropertiesFile.exists() || (envStoreFile && envStorePassword && envKeyAlias && envKeyPassword)
 
 android {
-    namespace = "com.xatpy.sendtogif"
+    namespace = "com.xatpy.sticktogif"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.xatpy.sendtogif"
+        applicationId "com.xatpy.sticktogif"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1000
-        versionName "0.1.0"
+        versionCode 1002
+        versionName "0.1.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

@@ -13,12 +13,12 @@ export function DropZone({
   onFileSelected,
   onPasteUrl,
   onError,
-  label = 'Drop a GIF, MP4, or MOV here',
+  label = 'Drop a GIF or MP4 here',
   hint = 'or tap to choose from your files',
   compact = false,
 }: DropZoneProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const accept = 'image/gif,video/mp4,video/quicktime,.mov';
+  const accept = 'image/gif,video/mp4,.mp4';
 
   useEffect(() => {
     if (!onPasteUrl) return;
@@ -55,10 +55,9 @@ export function DropZone({
 
     const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
     const isMp4 = file.type === 'video/mp4' || file.name.toLowerCase().endsWith('.mp4');
-    const isMov = file.type === 'video/quicktime' || file.name.toLowerCase().endsWith('.mov');
 
-    if (!isGif && !isMp4 && !isMov) {
-      onError?.('Please select an animated GIF, MP4, or MOV file.');
+    if (!isGif && !isMp4) {
+      onError?.('Please select an animated GIF or MP4 file.');
       return;
     }
     onFileSelected(file);
@@ -116,7 +115,7 @@ export function DropZone({
             void handlePasteUrl();
           }}
         >
-          or paste URL
+          Paste GIF URL
         </button>
       )}
       <input
