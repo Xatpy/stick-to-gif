@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StickToGif — Tracked Stickers for GIFs, Right on Your Device</title>
+  <meta name="description" content="Pin tracked stickers, text overlays, or blur effects onto moving subjects in GIFs. 100% private. No uploads. No account. Free.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="shortcut icon" href="assets/logo.png" type="image/png">
+  
+  <!-- Open Graph / Social Media -->
+  <meta property="og:title" content="StickToGif — Tracked Stickers for GIFs">
+  <meta property="og:description" content="Pin tracked stickers, text, or blur to moving subjects in GIFs. Runs entirely on your machine. No uploads, no account.">
+  <meta property="og:image" content="assets/logo.png">
+  <meta property="og:type" content="website">
+  
+  <style>
+    /* Carousel centering trick */
+    .carousel-container {
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+
+  <section class="hero">
+    <img src="assets/logo.png" alt="StickToGif Logo" class="logo">
+    <h1>Tracked stickers <br> for your GIFs.</h1>
+    <p>Pin tracked stickers, text overlays, or blur effects onto moving subjects entirely on your device. No cloud processing. No accounts. Free forever.</p>
+    
+    <div class="cta-group">
+      <a href="#" class="btn btn-primary" onclick="alert('iOS App pending App Store review.'); return false;">App Store</a>
+      <a href="#" class="btn btn-secondary" onclick="alert('Android App pending Play Store review.'); return false;">Google Play (coming soon)</a>
+    </div>
+  </section>
+
+  <section class="carousel-container">
+    <div class="carousel">
+      <img src="screenshots/screenshot-1.png" alt="Stickers follow the action">
+      <img src="screenshots/screenshot-2.png" alt="Tap anything to track">
+      <img src="screenshots/screenshot-3.png" alt="Stickers follow automatically">
+      <img src="screenshots/screenshot-4.png" alt="Privacy first comparison">
+      <img src="screenshots/screenshot-5.png" alt="Share in seconds">
+    </div>
+  </section>
+
+  <section class="features">
+    <div class="features-grid">
+      <div class="feature-item">
+        <h3>Computer Vision <br>In Your Browser</h3>
+        <p>Forget timeline keyframes. Tap the object you want to follow, and the underlying LK optical flow engine calculates the exact trajectory instantly. It works entirely in-memory using WebAssembly.</p>
+      </div>
+      <div class="feature-item">
+        <h3>Privacy-First <br>By Design</h3>
+        <p>Every alternative uploads your video to remote servers. StickToGif does none of that. Zero bytes are transmitted during the tracking process. What happens on your device stays on your device.</p>
+      </div>
+      <div class="feature-item">
+        <h3>No Watermarks <br>No BS</h3>
+        <p>You shouldn't have to subscribe to a $10/month service just to make one funny meme or manually blur out a license plate. StickToGif outputs pure GIFs and WebPs ready to be shared directly.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="faq">
+    <h2>Frequently Asked Questions</h2>
+    
+    <div class="faq-item">
+      <h4>Is it really free?</h4>
+      <p>Yes. StickToGif started as an open-source experiment in porting OpenCV tracking algorithms to the browser. There are no paywalls, accounts, or hidden "Premium" exports.</p>
+    </div>
+    
+    <div class="faq-item">
+      <h4>How can it be private without a server?</h4>
+      <p>Thanks to Modern Web Standards (WebAssembly and Web Workers), the heavy math required to analyze the video frames utilizes your device's hardware directly. No frame of your video is ever transmitted to a server — this is a technical fact about how the app is built, not just a policy promise.</p>
+    </div>
+    
+    <div class="faq-item">
+      <h4>What formats are supported?</h4>
+      <p>You can import Animated GIFs, MP4s, or MOVs (iPhone video) directly from your device. The application outputs optimized Animated WebPs or standard GIFs.</p>
+    </div>
+
+    <div class="faq-item">
+      <h4>Can I use my own images?</h4>
+      <p>Absolutely. You can upload any image from your device to use as a tracker, or choose from our built-in emoji presets. You can also add text captions or blur effects that follow the motion.</p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="links">
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="mailto:hi@chapiware.com">hi@chapiware.com</a>
+    </div>
+    <p>&copy; 2026 Chapiware. All rights reserved.</p>
+  </footer>
+
+</body>
+</html>

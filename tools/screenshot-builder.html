@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>StickToGif Screenshot Builder</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+    :root {
+      --canvas-width: 1320px;
+      --canvas-height: 2868px;
+      --preview-scale: 0.15;
+      --mockup-aspect: 1320 / 2868;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #222;
+      color: #fff;
+      padding: 20px;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .controls {
+      background: #111;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      width: 100%;
+      max-width: 1000px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      border: 1px solid #333;
+    }
+    
+    .controls-header {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #444;
+      padding-bottom: 10px;
+    }
+
+    .controls label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+      font-size: 14px;
+      color: #aaa;
+    }
+
+    .preview-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .screenshot-wrapper {
+      position: relative;
+      width: calc(var(--canvas-width) * var(--preview-scale));
+      height: calc(var(--canvas-height) * var(--preview-scale));
+      border: 1px solid #555;
+      background: #000;
+      box-sizing: border-box;
+      flex-shrink: 0;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .screenshot-canvas {
+      width: var(--canvas-width);
+      height: var(--canvas-height);
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform: scale(var(--preview-scale));
+      transform-origin: top left;
+      background-color: #f0ede6; /* Brand Beige */
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    
+    /* Device Specific Theme using container relative values */
+    .screenshot-canvas {
+      container-type: inline-size;
+    }
+    
+    .dark-bg { background-color: #2b1f1a; /* Brand Dark */ }
+
+    .title-serif {
+      font-family: 'Palatino', 'Iowan Old Style', serif;
+      font-size: 8cqw;
+      color: #2b1f1a;
+      text-align: center;
+      margin: 12cqw 5cqw 2cqw 5cqw;
+      line-height: 1.1;
+      z-index: 10;
+    }
+    .title-serif.light { color: #f0ede6; }
+
+    .subtitle-sans {
+      font-family: 'Inter', sans-serif;
+      font-size: 4cqw;
+      color: #9f5d39; /* Brand Rust */
+      text-align: center;
+      font-weight: 600;
+      margin-bottom: 6cqw; /* Pulled back to 6 */
+      z-index: 10;
+    }
+    .subtitle-sans.teal { color: #55f0c0; /* Brand Teal */ }
+
+    .device-mockup-wrapper {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    .device-mockup {
+      width: 84cqw;
+      /* By setting aspect-ratio, the device frame will ALWAYS be perfectly shaped. */
+      aspect-ratio: var(--mockup-aspect);
+      background: #fff;
+      border: 3cqw solid #111;
+      border-radius: 10cqw;
+      box-shadow: 0 4cqw 12cqw rgba(0,0,0,0.3);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .dynamic-island {
+      position: absolute;
+      top: 3.5cqw;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 25cqw;
+      height: 7cqw;
+      background: #000;
+      border-radius: 4cqw;
+      z-index: 10;
+    }
+    
+    .device-screen {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top center;
+      background: #eee;
+    }
+
+    .bottom-strip {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 25cqw;
+      background: #9f5d39;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+    }
+    
+    .logo-placeholder {
+      font-family: 'Palatino', serif;
+      font-size: 7cqw;
+      color: #f0ede6;
+      font-weight: bold;
+    }
+
+    .comparison-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 6cqw;
+      margin: 8cqw 10cqw;
+      font-size: 4.5cqw;
+      color: #fff;
+    }
+    .comp-row {
+      background: rgba(255,255,255,0.05);
+      padding: 5cqw;
+      border-radius: 4cqw;
+      line-height: 1.4;
+    }
+    .comp-row.brand {
+      background: rgba(85, 240, 192, 0.15);
+      border: 0.3cqw solid #55f0c0;
+    }
+    
+    .privacy-badge {
+      text-align: center;
+      font-size: 3.8cqw;
+      color: #55f0c0;
+      margin-top: auto;
+      margin-bottom: 25cqw;
+      font-weight: 600;
+    }
+
+    /* Target Device CSS adjustments */
+    body.is-ipad .device-mockup {
+      border-width: 1.5cqw;
+      border-radius: 3cqw;
+    }
+    body.is-ipad .dynamic-island {
+      display: none; /* iPad doesn't have dynamic island */
+    }
+    body.is-ipad .device-screen {
+      object-fit: cover; 
+      background: #111;
+    }
+    
+    /* Make the first screen bottom strip adapt */
+    body.is-ipad .bottom-strip {
+      height: 12cqw;
+    }
+    body.is-ipad .logo-placeholder {
+      font-size: 5cqw;
+    }
+
+    .btn-export {
+      background: #55f0c0;
+      color: #000;
+      padding: 10px 20px;
+      font-weight: bold;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.2s;
+    }
+    .btn-export:hover { background: #45d0a0; }
+    
+    select {
+      padding: 8px;
+      font-size: 16px;
+      border-radius: 4px;
+      background: #333;
+      color: #fff;
+      border: 1px solid #555;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>StickToGif App Store Assets</h1>
+  
+  <div class="controls">
+    <div class="controls-header">
+      <div>
+        <label style="display:inline-block; margin-top:0; margin-right: 10px; color:#fff;">Format:</label>
+        <select id="deviceSelector">
+          <option value="iphone69">iPhone 6.9" (1320 × 2868) - iPhone 16 Pro Max</option>
+          <option value="iphone67" selected>iPhone 6.7" (1284 × 2778) - iPhone 14 Pro Max</option>
+          <option value="iphone65">iPhone 6.5" (1242 × 2688) - iPhone 11 Pro Max</option>
+          <option value="ipad">iPad Pro 12.9" (2048 × 2732) - iPad</option>
+        </select>
+      </div>
+      <div>
+        <button class="btn-export" onclick="exportScreenshots()">📥 Download All</button>
+      </div>
+    </div>
+    
+    <div>
+      <label>1. Output Hook (Demo clip playing)</label>
+      <input type="file" id="img1" accept="image/*">
+
+      <label style="margin-top:20px;">2. Pick Subject step (teal box)</label>
+      <input type="file" id="img2" accept="image/*">
+    </div>
+    <div>
+      <label>3. Export step (with sticker pinned)</label>
+      <input type="file" id="img3" accept="image/*">
+
+      <label style="margin-top:20px;">4. OS Share Sheet open</label>
+      <input type="file" id="img4" accept="image/*">
+    </div>
+  </div>
+
+  <div class="preview-container">
+    
+    <!-- Screen 1: The Hook -->
+    <div class="screenshot-wrapper">
+      <div class="screenshot-canvas" id="screen-1">
+        <div class="title-serif">Stickers that actually follow the action</div>
+        <div class="subtitle-sans">No uploads. Runs on your device.</div>
+        
+        <div class="device-mockup-wrapper">
+          <!-- Removed exact margins causing the bad clip. It naturally overflows and bleeds downwards! -->
+          <div class="device-mockup">
+            <div class="dynamic-island"></div>
+            <img id="render-1" class="device-screen" src="" alt="">
+          </div>
+        </div>
+
+        <div class="bottom-strip">
+          <div class="logo-placeholder">StickToGif</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 2: The How -->
+    <div class="screenshot-wrapper">
+      <div class="screenshot-canvas" id="screen-2">
+        <div class="title-serif">Tap anything to track it</div>
+        <div class="subtitle-sans teal" style="color: #9f5d39;">Optical flow connects the dots</div>
+        
+        <div class="device-mockup-wrapper">
+          <div class="device-mockup">
+            <div class="dynamic-island"></div>
+            <img id="render-2" class="device-screen" src="" alt="">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 3: The Magic Moment -->
+    <div class="screenshot-wrapper">
+      <div class="screenshot-canvas" id="screen-3">
+        <div class="title-serif">Stickers follow automatically</div>
+        <div class="subtitle-sans teal" style="color: #9f5d39;">Add emoji, text, or blur effects</div>
+        
+        <div class="device-mockup-wrapper">
+          <div class="device-mockup">
+            <div class="dynamic-island"></div>
+            <img id="render-3" class="device-screen" src="" alt="">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 4: The Privacy Differentiator -->
+    <div class="screenshot-wrapper">
+      <div class="screenshot-canvas dark-bg" id="screen-4">
+        <div class="title-serif light" style="margin-top: 25cqw;">Why StickToGif?</div>
+        
+        <div class="comparison-rows">
+          <div class="comp-row">
+            <span style="color: #888;">Other tools:</span><br>
+            Upload → Wait for Cloud → Watermark → Pay monthly
+          </div>
+          <div class="comp-row brand">
+            <span style="color: #55f0c0; font-weight: bold;">StickToGif:</span><br>
+            Tap → Track → Export ✓
+          </div>
+        </div>
+
+        <div class="privacy-badge">
+          🛡️ 100% private · no uploads · instant processing
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 5: The Output -->
+    <div class="screenshot-wrapper">
+      <div class="screenshot-canvas" id="screen-5">
+        <div class="title-serif">Share in seconds</div>
+        <div class="subtitle-sans teal" style="color: #9f5d39;">Direct to Messages &amp; WhatsApp</div>
+        
+        <div class="device-mockup-wrapper">
+          <div class="device-mockup">
+            <div class="dynamic-island"></div>
+            <img id="render-5" class="device-screen" src="" alt="">
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const sizes = {
+      'iphone69': { w: 1320, h: 2868, scale: 0.15 },
+      'iphone67': { w: 1284, h: 2778, scale: 0.15 },
+      'iphone65': { w: 1242, h: 2688, scale: 0.16 },
+      'ipad':     { w: 2048, h: 2732, scale: 0.12 }
+    };
+
+    const deviceSelector = document.getElementById('deviceSelector');
+    
+    deviceSelector.addEventListener('change', (e) => {
+      const mode = e.target.value;
+      const size = sizes[mode];
+      
+      document.documentElement.style.setProperty('--canvas-width', size.w + 'px');
+      document.documentElement.style.setProperty('--canvas-height', size.h + 'px');
+      document.documentElement.style.setProperty('--preview-scale', size.scale);
+      document.documentElement.style.setProperty('--mockup-aspect', `${size.w} / ${size.h}`);
+      
+      if (mode === 'ipad') {
+        document.body.classList.add('is-ipad');
+      } else {
+        document.body.classList.remove('is-ipad');
+      }
+    });
+
+    // Trigger initial state
+    deviceSelector.dispatchEvent(new Event('change'));
+
+    // Setup file inputs
+    function setupInput(inputId, imgId) {
+      document.getElementById(inputId).addEventListener('change', function(e) {
+        if (e.target.files && e.target.files[0]) {
+          const reader = new FileReader();
+          reader.onload = function(evt) {
+            document.getElementById(imgId).src = evt.target.result;
+          };
+          reader.readAsDataURL(e.target.files[0]);
+        }
+      });
+    }
+
+    setupInput('img1', 'render-1');
+    setupInput('img2', 'render-2');
+    setupInput('img3', 'render-3');
+    setupInput('img4', 'render-5');
+
+    // Export function using html2canvas
+    async function exportScreenshots() {
+      const btn = document.querySelector('.btn-export');
+      btn.innerText = "⏳ Exporting...";
+      btn.disabled = true;
+
+      const canvases = document.querySelectorAll('.screenshot-canvas');
+      const mode = deviceSelector.value;
+      const w = sizes[mode].w;
+      const h = sizes[mode].h;
+      
+      for (let i = 0; i < canvases.length; i++) {
+        const el = canvases[i];
+        
+        // Remove scale transform temporarily for clear export
+        const oldTransform = el.style.transform;
+        el.style.transform = 'none';
+        
+        try {
+          // Add a small delay for DOM to apply untransformed state
+          await new Promise(res => setTimeout(res, 50)); 
+
+          const rawCanvas = await html2canvas(el, {
+            width: w,
+            height: h,
+            windowWidth: w,
+            windowHeight: h,
+            scale: 1, // Enforce 1:1 pixel mapping
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#000000',
+            logging: false
+          });
+          
+          // Guarantee the final output is EXACTLY w x h regardless of devicePixelRatio
+          const exactCanvas = document.createElement('canvas');
+          exactCanvas.width = w;
+          exactCanvas.height = h;
+          const ctx = exactCanvas.getContext('2d');
+          ctx.drawImage(rawCanvas, 0, 0, w, h);
+          
+          const link = document.createElement('a');
+          link.download = `sticktogif_${mode}_screen_${i+1}.png`;
+          link.href = exactCanvas.toDataURL('image/png', 1.0);
+          link.click();
+          
+          // Slight delay between downloads
+          await new Promise(res => setTimeout(res, 500));
+        } catch (err) {
+          console.error("Export failed for screen " + (i+1), err);
+        } finally {
+          el.style.transform = oldTransform;
+        }
+      }
+      
+      btn.innerText = "✅ Done! Export More?";
+      setTimeout(() => {
+        btn.innerText = "📥 Download All";
+        btn.disabled = false;
+      }, 3000);
+    }
+  </script>
+</body>
+</html>

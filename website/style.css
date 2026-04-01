@@ -1,0 +1,242 @@
+/* Chapiware Design System */
+:root {
+  --color-bg: #2b1f1a;
+  --color-surface: #f0ede6;
+  --color-accent: #55f0c0;
+  --color-rust: #9f5d39;
+  --color-text-light: #f0ede6;
+  --color-text-dark: #2b1f1a;
+  --color-muted: rgba(240, 237, 230, 0.6);
+  --font-serif: 'Palatino', 'Iowan Old Style', 'Georgia', serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg);
+  color: var(--color-text-light);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Typography */
+h1, h2, h3, .serif {
+  font-family: var(--font-serif);
+  font-weight: normal;
+}
+
+/* Hero Section */
+.hero {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 8rem 2rem 5rem;
+  text-align: center;
+}
+
+.logo {
+  width: 80px;
+  height: 80px;
+  border-radius: 18px;
+  margin-bottom: 2.5rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.hero h1 {
+  font-size: clamp(3rem, 10vw, 5.5rem);
+  line-height: 1.1;
+  margin-bottom: 2rem;
+  letter-spacing: -0.02em;
+}
+
+.hero p {
+  font-size: 1.4rem;
+  color: var(--color-muted);
+  max-width: 700px;
+  margin: 0 auto 3.5rem;
+}
+
+/* Buttons */
+.cta-group {
+  display: flex;
+  gap: 1.2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-block;
+  padding: 1.1rem 2.2rem;
+  border-radius: 999px;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 1.1rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.btn-primary {
+  background-color: var(--color-accent);
+  color: #0b261b;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+
+.btn-secondary {
+  border: 1px solid rgba(240, 237, 230, 0.2);
+  color: var(--color-text-light);
+}
+
+.btn-secondary:hover {
+  background-color: rgba(240, 237, 230, 0.05);
+  border-color: rgba(240, 237, 230, 0.4);
+}
+
+/* Screenshot Carousel */
+.carousel-container {
+  padding: 2rem 0 8rem;
+  overflow: hidden;
+}
+
+.carousel {
+  display: flex;
+  gap: 2.5rem;
+  padding: 0 50vw 3rem 4rem; /* Right padding allows centering the last one */
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel img {
+  height: 650px;
+  border-radius: 24px;
+  scroll-snap-align: center;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0;
+  transition: transform 0.4s ease;
+}
+
+@media (max-width: 768px) {
+  .hero { padding-top: 5rem; }
+  .carousel { padding-left: 2rem; gap: 1.5rem; }
+  .carousel img { height: 480px; }
+}
+
+/* Features */
+.features {
+  background-color: var(--color-surface);
+  color: var(--color-text-dark);
+  padding: 8rem 2rem;
+}
+
+.features-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 5rem;
+}
+
+.feature-item h3 {
+  font-size: 2.2rem;
+  margin-bottom: 1.2rem;
+  color: var(--color-rust);
+  line-height: 1.2;
+}
+
+.feature-item p {
+  font-size: 1.15rem;
+  color: #4a3a31;
+}
+
+/* FAQ */
+.faq {
+  max-width: 850px;
+  margin: 0 auto;
+  padding: 8rem 2rem;
+}
+
+.faq h2 {
+  font-size: 3.5rem;
+  text-align: center;
+  margin-bottom: 5rem;
+}
+
+.faq-item {
+  border-bottom: 1px solid rgba(240, 237, 230, 0.1);
+  padding: 3rem 0;
+}
+
+.faq-item:first-child { border-top: 1px solid rgba(240, 237, 230, 0.1); }
+
+.faq-item h4 {
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  color: var(--color-accent);
+}
+
+.faq-item p {
+  font-size: 1.1rem;
+  color: var(--color-muted);
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 6rem 2rem 4rem;
+  border-top: 1px solid rgba(240, 237, 230, 0.1);
+}
+
+footer .links {
+  margin-bottom: 3rem;
+}
+
+footer a {
+  color: var(--color-text-light);
+  text-decoration: none;
+  margin: 0 1.5rem;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+footer a:hover {
+  opacity: 1;
+}
+
+footer p {
+  font-size: 0.9rem;
+  opacity: 0.4;
+}
+
+/* Privacy Page Specifics */
+.prose-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 8rem 2rem;
+}
+
+.prose-container h1 { font-size: 4rem; margin-bottom: 1rem; color: var(--color-accent); }
+.prose-container h2 { font-size: 2rem; margin-top: 3.5rem; margin-bottom: 1.5rem; color: var(--color-accent); }
+.prose-container p { margin-bottom: 1.5rem; font-size: 1.2rem; color: var(--color-muted); }
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 4rem;
+  color: var(--color-accent);
+  text-decoration: none;
+}
+.back-link:hover { text-decoration: underline; }
