@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.chapiware.sticktogif',
+  appId: 'com.xatpy.sticktogif',
   appName: 'StickToGif',
   webDir: 'dist',
   bundledWebRuntime: false,

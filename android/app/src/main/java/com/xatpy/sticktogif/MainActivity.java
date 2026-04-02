@@ -1,4 +1,4 @@
-package com.sticktogif.app;
+package com.xatpy.sticktogif;
 
 import com.getcapacitor.BridgeActivity;
 

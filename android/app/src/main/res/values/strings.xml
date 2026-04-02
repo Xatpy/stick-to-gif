@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">StickToGif</string>
     <string name="title_activity_main">StickToGif</string>
-    <string name="package_name">com.sticktogif.app</string>
-    <string name="custom_url_scheme">com.sticktogif.app</string>
+    <string name="package_name">com.xatpy.sticktogif</string>
+    <string name="custom_url_scheme">com.xatpy.sticktogif</string>
 </resources>
