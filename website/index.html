@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>StickToGif — Tracked Stickers for GIFs, Right on Your Device</title>
-  <meta name="description" content="Pin tracked stickers, text overlays, or blur effects onto moving subjects in GIFs. 100% private. No uploads. No account. Free.">
+  <title>StickToGif — Add tracked stickers, text, and blur to GIFs</title>
+  <meta name="description" content="Make memes where stickers follow the action, add moving text overlays, or blur faces in GIFs and short videos. Runs on-device. No uploads, no account, no watermark.">
   <link rel="stylesheet" href="style.css">
   <link rel="shortcut icon" href="assets/logo.png" type="image/png">
   
   <!-- Open Graph / Social Media -->
-  <meta property="og:title" content="StickToGif — Tracked Stickers for GIFs">
-  <meta property="og:description" content="Pin tracked stickers, text, or blur to moving subjects in GIFs. Runs entirely on your machine. No uploads, no account.">
+  <meta property="og:title" content="StickToGif — Add tracked stickers, text, and blur to GIFs">
+  <meta property="og:description" content="A private GIF tracking editor for stickers, moving text overlays, and blur. Runs on-device with no uploads, no account, and no watermark.">
   <meta property="og:image" content="assets/logo.png">
   <meta property="og:type" content="website">
   
@@ -25,16 +25,80 @@
 
   <section class="hero">
     <img src="assets/logo.png" alt="StickToGif Logo" class="logo">
-    <h1>Tracked stickers <br> for your GIFs.</h1>
-    <p>Pin tracked stickers, text overlays, or blur effects onto moving subjects entirely on your device. No cloud processing. No accounts. Free forever.</p>
+    <p class="eyebrow">Now on the App Store for iPhone</p>
+    <h1>Make GIFs where <br> the edit follows the action.</h1>
+    <p>StickToGif lets you add tracked stickers, moving text overlays, or blur effects to GIFs and short videos in seconds. It runs directly on your device, with no uploads, no account, and no watermark.</p>
     
     <div class="cta-group">
-      <a href="#" class="btn btn-primary" onclick="alert('iOS App pending App Store review.'); return false;">App Store</a>
+      <a href="https://apps.apple.com/us/app/sticktogif/id6761470500" class="btn btn-primary" target="_blank" rel="noopener noreferrer">Download on the App Store</a>
       <a href="#" class="btn btn-secondary" onclick="alert('Android App pending Play Store review.'); return false;">Google Play (coming soon)</a>
+    </div>
+
+    <ul class="trust-points" aria-label="Key product benefits">
+      <li>No uploads</li>
+      <li>No account</li>
+      <li>On-device tracking</li>
+      <li>No watermark</li>
+      <li>Free forever</li>
+    </ul>
+
+    <div class="hero-demo">
+      <img src="assets/demo.gif" alt="Example creation showing a tracked sticker following the subject in a GIF">
+    </div>
+  </section>
+
+  <section class="availability-strip">
+    <div class="availability-strip__inner">
+      <div>
+        <p class="eyebrow">Available now</p>
+        <h2>StickToGif is live on iPhone</h2>
+        <p>Download the app from the App Store and make tracked GIF edits without sending your media anywhere.</p>
+      </div>
+      <a href="https://apps.apple.com/us/app/sticktogif/id6761470500" class="btn btn-primary" target="_blank" rel="noopener noreferrer">Get the iPhone app</a>
+    </div>
+  </section>
+
+  <section class="use-cases">
+    <div class="section-heading">
+      <p class="eyebrow">What you can do</p>
+      <h2>A private GIF tracking editor for actual use cases</h2>
+      <p>StickToGif is built for the moments where a normal GIF editor is too static and a cloud tool is too annoying.</p>
+    </div>
+
+    <div class="use-cases-grid">
+      <div class="use-case-card">
+        <h3>Make memes where stickers follow the action</h3>
+        <p>Add an emoji, reaction image, or custom sticker to a moving subject without manual keyframes.</p>
+      </div>
+      <div class="use-case-card">
+        <h3>Put text directly on the motion</h3>
+        <p>Create moving captions, labels, or jokes that stay attached to a person, object, or animal.</p>
+      </div>
+      <div class="use-case-card">
+        <h3>Blur faces, screens, or license plates</h3>
+        <p>Track sensitive details in a GIF or short video and keep the blur locked on as things move.</p>
+      </div>
+      <div class="use-case-card">
+        <h3>Track objects in short videos before exporting</h3>
+        <p>Import MP4 or MOV clips, track the subject, and turn the result into a shareable GIF.</p>
+      </div>
+      <div class="use-case-card">
+        <h3>Make reaction GIFs without uploading anything</h3>
+        <p>Useful for private clips, inside jokes, and quick edits you do not want to send to a server.</p>
+      </div>
+      <div class="use-case-card">
+        <h3>Use a private on-device GIF editor instead of a cloud tool</h3>
+        <p>Everything runs locally, so your media stays on your device from tracking to export.</p>
+      </div>
     </div>
   </section>
 
   <section class="carousel-container">
+    <div class="section-heading">
+      <p class="eyebrow">How it works</p>
+      <h2>Tap it, track it, export it</h2>
+      <p>Real computer vision under the hood, but the workflow stays simple.</p>
+    </div>
     <div class="carousel">
       <img src="screenshots/screenshot-1.png" alt="Stickers follow the action">
       <img src="screenshots/screenshot-2.png" alt="Tap anything to track">
@@ -42,46 +106,121 @@
       <img src="screenshots/screenshot-4.png" alt="Privacy first comparison">
       <img src="screenshots/screenshot-5.png" alt="Share in seconds">
     </div>
+    <div class="story-grid">
+      <div class="story-card">
+        <h3>Tap anything to track</h3>
+        <p>Pick the person, object, or detail you want to follow. No timeline work, no manual frame-by-frame editing.</p>
+      </div>
+      <div class="story-card">
+        <h3>Stickers stay locked on</h3>
+        <p>Make memes where the reaction follows the action instead of floating awkwardly over the whole clip.</p>
+      </div>
+      <div class="story-card">
+        <h3>Add blur that actually stays put</h3>
+        <p>Hide a face, screen, plate, or sensitive detail while it moves through the shot.</p>
+      </div>
+      <div class="story-card">
+        <h3>Put text on the motion</h3>
+        <p>Add a moving text overlay that follows the subject, which works especially well for jokes and labels.</p>
+      </div>
+      <div class="story-card">
+        <h3>No uploads, no waiting on a server</h3>
+        <p>The tracking runs on-device, so private media stays private and small edits stay fast.</p>
+      </div>
+      <div class="story-card">
+        <h3>Share in seconds</h3>
+        <p>Export the result as a GIF and send it where you want without a watermark or account wall.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="examples">
+    <div class="section-heading">
+      <p class="eyebrow">Real examples</p>
+      <h2>What a finished creation looks like</h2>
+      <p>The point is not just tracking for its own sake. It is getting to a GIF that feels finished, funny, readable, or safe to share.</p>
+    </div>
+    <div class="examples-grid">
+      <div class="example-card">
+        <img src="assets/demo.gif" alt="Tracked sticker meme example made with StickToGif">
+        <h3>Tracked sticker meme</h3>
+        <p>Turn a short reaction clip into something that actually lands because the sticker stays with the subject.</p>
+      </div>
+      <div class="example-card">
+        <img src="screenshots/screenshot-3.png" alt="Moving text overlay example in StickToGif">
+        <h3>Moving text overlay</h3>
+        <p>Add labels, punchlines, or commentary directly on the motion instead of placing static text above it.</p>
+      </div>
+      <div class="example-card">
+        <img src="screenshots/screenshot-4.png" alt="Blur tracking example in StickToGif">
+        <h3>Blur that keeps up</h3>
+        <p>Hide faces, screens, or other details in motion with a blur that stays attached as the scene moves.</p>
+      </div>
+    </div>
   </section>
 
   <section class="features">
+    <div class="section-heading">
+      <p class="eyebrow">Why it feels different</p>
+      <h2>Built like a tool, not a content trap</h2>
+      <p>Most alternatives either want your upload, your subscription, or your patience. StickToGif is meant to get in, do the job, and get out of the way.</p>
+    </div>
     <div class="features-grid">
       <div class="feature-item">
-        <h3>Computer Vision <br>In Your Browser</h3>
-        <p>Forget timeline keyframes. Tap the object you want to follow, and the underlying LK optical flow engine calculates the exact trajectory instantly. It works entirely in-memory using WebAssembly.</p>
+        <h3>Real tracking <br>powered by computer vision</h3>
+        <p>StickToGif uses actual tracking, not fake motion presets. Tap what you want to follow and the app keeps your sticker, text, or blur attached to it.</p>
       </div>
       <div class="feature-item">
-        <h3>Privacy-First <br>By Design</h3>
-        <p>Every alternative uploads your video to remote servers. StickToGif does none of that. Zero bytes are transmitted during the tracking process. What happens on your device stays on your device.</p>
+        <h3>Runs directly <br>on your device</h3>
+        <p>No cloud rendering, no upload queue, no media leaving your device during processing. That is the whole point.</p>
       </div>
       <div class="feature-item">
-        <h3>No Watermarks <br>No BS</h3>
-        <p>You shouldn't have to subscribe to a $10/month service just to make one funny meme or manually blur out a license plate. StickToGif outputs pure GIFs and WebPs ready to be shared directly.</p>
+        <h3>No watermark <br>no account, no nonsense</h3>
+        <p>If you want to make one tracked meme, blur a moving face, or label a clip, you should be able to do it without signing up or paying a monthly fee.</p>
       </div>
+    </div>
+  </section>
+
+  <section class="technical-proof">
+    <div class="section-heading">
+      <p class="eyebrow">Under the hood</p>
+      <h2>Technically serious, intentionally simple</h2>
+      <p>For people who care how it works, StickToGif uses WebAssembly, Web Workers, and optical flow tracking to process frames locally on your device.</p>
+    </div>
+    <div class="technical-proof__copy">
+      <p>That means you get a private GIF editor with real tracking instead of a basic sticker tool. The media stays local, the tracking happens in-memory, and the output is ready to save or share when you are done.</p>
     </div>
   </section>
 
   <section class="faq">
-    <h2>Frequently Asked Questions</h2>
-    
+    <div class="section-heading">
+      <p class="eyebrow">FAQ</p>
+      <h2>Questions people usually ask</h2>
+    </div>
+
     <div class="faq-item">
       <h4>Is it really free?</h4>
-      <p>Yes. StickToGif started as an open-source experiment in porting OpenCV tracking algorithms to the browser. There are no paywalls, accounts, or hidden "Premium" exports.</p>
+      <p>Yes. No subscription, no paid export tier, no watermark, no account wall. The goal is a useful tool you can actually keep around.</p>
     </div>
     
     <div class="faq-item">
       <h4>How can it be private without a server?</h4>
-      <p>Thanks to Modern Web Standards (WebAssembly and Web Workers), the heavy math required to analyze the video frames utilizes your device's hardware directly. No frame of your video is ever transmitted to a server — this is a technical fact about how the app is built, not just a policy promise.</p>
+      <p>The tracking runs locally on your device using WebAssembly and background workers. Your media is not uploaded to a remote server for processing.</p>
     </div>
     
     <div class="faq-item">
       <h4>What formats are supported?</h4>
-      <p>You can import Animated GIFs, MP4s, or MOVs (iPhone video) directly from your device. The application outputs optimized Animated WebPs or standard GIFs.</p>
+      <p>You can import animated GIFs, MP4s, and MOVs from iPhone. StickToGif is built for short clips and exports shareable GIFs.</p>
+    </div>
+
+    <div class="faq-item">
+      <h4>What can it track?</h4>
+      <p>People, pets, faces, objects, screens, license plates, and other visible subjects that stay readable across frames. It works best on short clips with clear motion and decent contrast.</p>
     </div>
 
     <div class="faq-item">
       <h4>Can I use my own images?</h4>
-      <p>Absolutely. You can upload any image from your device to use as a tracker, or choose from our built-in emoji presets. You can also add text captions or blur effects that follow the motion.</p>
+      <p>Yes. You can upload your own image as a sticker, use the built-in emoji presets, add moving text, or apply blur instead.</p>
     </div>
   </section>
 
