@@ -12,6 +12,13 @@ These steps are safe to document and automate in the public repo.
 4. Run `npm run cap:sync`.
 5. Verify the mobile test matrix has no blocker failures.
 6. Confirm no secret-bearing files are staged in git.
+7. Confirm mobile-only UI remains mobile-only:
+   - bottom tabs appear on native mobile only
+   - `My Creations` does not appear on web
+8. Confirm mobile export behavior matches the shipped UX:
+   - successful GIF exports are saved into `My Creations`
+   - `Save GIF` does not open share
+   - `Share GIF` saves first, then opens share
 
 ## Private Release Steps
 
@@ -51,3 +58,7 @@ Do not commit:
 2. The bundle identifier is correct for the intended release target.
 3. The release build path does not depend on committed secrets.
 4. The repo remains public-safe after the release branch changes.
+5. Store metadata still matches shipped behavior:
+   - mobile library exists
+   - exports stay on-device
+   - mobile output promises do not mention WebP if the shipped mobile UI does not expose it

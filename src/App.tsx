@@ -3,8 +3,21 @@ import { DropZone } from './components/DropZone';
 import { EditorCanvas } from './components/EditorCanvas';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Modal } from './components/Modal';
+import {
+  MyCreationsView,
+  type SavedCreationListItem,
+} from './components/MyCreationsView';
 import { OverlayPicker } from './components/OverlayPicker';
 import { PreviewPlayer } from './components/PreviewPlayer';
+import {
+  creationExists,
+  deleteSavedCreation,
+  getCreationPreviewUrl,
+  listSavedCreations,
+  saveCreation,
+  shareSavedCreation,
+  type SavedCreation,
+} from './creations/storage';
 import { exportGif } from './gif/exportGif';
 import { decodeSource } from './media/decodeSource';
 import { canEncodeWebp, exportAnimatedWebp } from './webp/exportWebp';
@@ -50,6 +63,8 @@ const defaultTextStyle: TextOverlayStyle = {
 const defaultBlurStyle: BlurStyle = { intensity: 0.5 };
 const flowSteps = ['Upload', 'Pick subject', 'Choose effect', 'Export'] as const;
 const MAX_UPLOADED_STICKER_DIMENSION = 1024;
+type AppTab = 'create' | 'creations';
+type ExportAction = 'save' | 'share';
 
 /* ── Helpers ────────────────────────────────────────────────── */
 
@@ -201,10 +216,25 @@ async function loadBundledSample() {
   return new File([blob], 'demo.gif', { type: blob.type || 'image/gif' });
 }
 
+async function hydrateSavedCreation(creation: SavedCreation): Promise<SavedCreationListItem> {
+  const exists = await creationExists(creation);
+  const previewUrl = exists
+    ? await getCreationPreviewUrl(creation).catch(() => null)
+    : null;
+
+  return {
+    ...creation,
+    previewUrl,
+    isMissing: !exists || !previewUrl,
+  };
+}
+
 /* ── App ────────────────────────────────────────────────────── */
 
 export default function App() {
   /* State */
+  const isNativeMobile = isNativeMobilePlatform();
+  const [activeTab, setActiveTab] = useState<AppTab>('create');
   const [step, setStep] = useState<AppStep>('input');
   const [gif, setGif] = useState<DecodedGif | null>(null);
   const [targetRect, setTargetRect] = useState<Rect | null>(null);
@@ -222,6 +252,9 @@ export default function App() {
   const [showHelp, setShowHelp] = useState(false);
   const [webpSupported, setWebpSupported] = useState<boolean | null>(null);
   const [preferShareLabel, setPreferShareLabel] = useState(false);
+  const [creations, setCreations] = useState<SavedCreationListItem[]>([]);
+  const [isLoadingCreations, setIsLoadingCreations] = useState(true);
+  const [selectedCreation, setSelectedCreation] = useState<SavedCreationListItem | null>(null);
   const [, setDebugLog] = useState<DebugEntry[]>([]);
 
   useEffect(() => {
@@ -248,7 +281,31 @@ export default function App() {
     };
   }, []);
 
-  const isNativeMobile = isNativeMobilePlatform();
+  useEffect(() => {
+    let cancelled = false;
+
+    void listSavedCreations()
+      .then((items) => Promise.all(items.map((item) => hydrateSavedCreation(item))))
+      .then((items) => {
+        if (!cancelled) {
+          setCreations(items);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCreations([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoadingCreations(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (isNativeMobile) {
@@ -304,7 +361,8 @@ export default function App() {
     };
   }, [gif]);
   const isBusy = status.stage !== 'idle';
-  const primaryExportLabel = preferShareLabel ? 'Share GIF' : 'Download GIF';
+  const primaryExportLabel = isNativeMobile ? 'Save GIF' : preferShareLabel ? 'Share GIF' : 'Download GIF';
+  const mobileShareExportLabel = 'Share GIF';
   const secondaryExportLabel = preferShareLabel ? 'Share WebP' : 'Download WebP';
   const activeFlowStep = (() => {
     switch (step) {
@@ -528,7 +586,7 @@ export default function App() {
     setStep('export');
   };
 
-  const handleExport = async (format: 'gif' | 'webp') => {
+  const handleExport = async (format: 'gif' | 'webp', action: ExportAction = 'share') => {
     if (!gif || !composedFrames) return;
     if (format === 'webp' && webpSupported === false) {
       setError('WebP export is not supported in this browser. Export GIF instead.');
@@ -560,13 +618,45 @@ export default function App() {
 
       setStatus(idleStatus);
 
+      let savedCreation: SavedCreationListItem | null = null;
+
+      try {
+        const storedCreation = await saveCreation({ blob, filename });
+        savedCreation = await hydrateSavedCreation(storedCreation);
+        const nextSavedCreation = savedCreation;
+        setCreations((current) => [nextSavedCreation, ...current.filter((item) => item.id !== nextSavedCreation.id)]);
+      } catch (saveError) {
+        const message = saveError instanceof Error
+          ? saveError.message
+          : 'Export completed, but the file could not be added to My Creations.';
+        setError(message);
+      }
+
       if (isNativeMobile) {
-        await exportResultNatively({
-          blob,
-          filename,
-          title: 'StickToGif export',
-          debugReporter: appendDebug,
-        });
+        if (format === 'webp') {
+          if (!savedCreation) {
+            throw new Error('WebP export completed, but it could not be saved to My Creations.');
+          }
+          return;
+        }
+
+        if (action === 'save') {
+          if (!savedCreation) {
+            throw new Error('GIF export completed, but it could not be saved to My Creations.');
+          }
+          return;
+        }
+
+        if (savedCreation) {
+          await shareSavedCreation(savedCreation, 'StickToGif export');
+        } else {
+          await exportResultNatively({
+            blob,
+            filename,
+            title: 'StickToGif export',
+            debugReporter: appendDebug,
+          });
+        }
       } else if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
           await navigator.share({
@@ -592,6 +682,26 @@ export default function App() {
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Export failed.');
       setStatus(idleStatus);
+    }
+  };
+
+  const handleShareCreation = async (creation: SavedCreationListItem) => {
+    try {
+      setError(null);
+      await shareSavedCreation(creation, 'StickToGif export');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to share that creation.');
+    }
+  };
+
+  const handleDeleteCreation = async (creation: SavedCreationListItem) => {
+    try {
+      setError(null);
+      await deleteSavedCreation(creation);
+      setCreations((current) => current.filter((item) => item.id !== creation.id));
+      setSelectedCreation((current) => (current?.id === creation.id ? null : current));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to delete that creation.');
     }
   };
 
@@ -773,20 +883,32 @@ export default function App() {
               <button
                 type="button"
                 className="button button--full"
-                onClick={() => handleExport('gif')}
+                onClick={() => handleExport('gif', isNativeMobile ? 'save' : 'share')}
                 disabled={isBusy}
               >
                 {isExporting ? `Exporting…` : primaryExportLabel}
               </button>
-              <button
-                type="button"
-                className="button button--secondary button--full"
-                onClick={() => handleExport('webp')}
-                disabled={isBusy || webpSupported === false}
-                title={webpSupported === false ? 'WebP export is unavailable in this browser.' : undefined}
-              >
-                {webpSupported === false ? 'WebP Unavailable' : secondaryExportLabel}
-              </button>
+              {isNativeMobile && (
+                <button
+                  type="button"
+                  className="button button--secondary button--full"
+                  onClick={() => handleExport('gif', 'share')}
+                  disabled={isBusy}
+                >
+                  {isExporting ? `Exporting…` : mobileShareExportLabel}
+                </button>
+              )}
+              {!isNativeMobile && (
+                <button
+                  type="button"
+                  className="button button--secondary button--full"
+                  onClick={() => handleExport('webp')}
+                  disabled={isBusy || webpSupported === false}
+                  title={webpSupported === false ? 'WebP export is unavailable in this browser.' : undefined}
+                >
+                  {webpSupported === false ? 'WebP Unavailable' : secondaryExportLabel}
+                </button>
+              )}
             </div>
             <button type="button" className="start-over-link" onClick={resetAll} disabled={isBusy}>
               Start over
@@ -949,29 +1071,71 @@ export default function App() {
     </Modal>
   );
 
+  const renderTabs = () => (
+    <nav className="app-tabs" aria-label="Top level views">
+      <button
+        type="button"
+        className={`app-tabs__item ${activeTab === 'create' ? 'is-active' : ''}`}
+        aria-current={activeTab === 'create' ? 'page' : undefined}
+        onClick={() => setActiveTab('create')}
+      >
+        Create
+      </button>
+      <button
+        type="button"
+        className={`app-tabs__item ${activeTab === 'creations' ? 'is-active' : ''}`}
+        aria-current={activeTab === 'creations' ? 'page' : undefined}
+        onClick={() => setActiveTab('creations')}
+      >
+        My Creations
+      </button>
+    </nav>
+  );
+
   return (
     <main className="app-shell">
       {renderBrand('mobile-topbar')}
-      <div className={`product-frame ${step === 'input' ? 'product-frame--empty' : ''}`}>
-        {/* Sidebar */}
-        <aside className="sidebar">
-          {renderBrand()}
+      {(isNativeMobile ? activeTab === 'create' : true) ? (
+        <div className={`product-frame ${step === 'input' ? 'product-frame--empty' : ''}`}>
+          <aside className="sidebar">
+            {renderBrand()}
+            {error && (
+              <div className="error-banner" role="alert">
+                {error}
+              </div>
+            )}
+            {step !== 'input' && renderStepper()}
+            {renderSidebar()}
+          </aside>
+
+          <div className="main-area">
+            <ErrorBoundary onReset={resetAll}>
+              {renderCanvas()}
+            </ErrorBoundary>
+          </div>
+        </div>
+      ) : (
+        <div className="library-frame">
+          <div className="library-frame__header">
+            {renderBrand('library-brand')}
+          </div>
           {error && (
             <div className="error-banner" role="alert">
               {error}
             </div>
           )}
-          {step !== 'input' && renderStepper()}
-          {renderSidebar()}
-        </aside>
-
-        {/* Main area */}
-        <div className="main-area">
-          <ErrorBoundary onReset={resetAll}>
-            {renderCanvas()}
-          </ErrorBoundary>
+          <MyCreationsView
+            creations={creations}
+            isLoading={isLoadingCreations}
+            selectedCreation={selectedCreation}
+            onOpen={setSelectedCreation}
+            onClosePreview={() => setSelectedCreation(null)}
+            onShare={(creation) => void handleShareCreation(creation)}
+            onDelete={(creation) => void handleDeleteCreation(creation)}
+          />
         </div>
-      </div>
+      )}
+      {isNativeMobile && renderTabs()}
 
       {renderHelpModal()}
     </main>

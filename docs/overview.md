@@ -2,7 +2,7 @@
 
 ## What the app is
 
-StickToGif is a single-purpose, frontend-only web app for attaching a sticker, text overlay, or blur effect to a moving object inside a short animation.
+StickToGif is a single-purpose, frontend-only app for attaching a sticker, text overlay, or blur effect to a moving object inside a short animation.
 
 It is designed around one fast local workflow:
 
@@ -12,7 +12,7 @@ It is designed around one fast local workflow:
 4. attach something to it
 5. export
 
-Everything runs locally in the browser:
+Everything runs locally on-device:
 
 - GIF decoding
 - MP4 frame sampling
@@ -20,6 +20,7 @@ Everything runs locally in the browser:
 - overlay computation
 - preview playback
 - GIF and animated WebP export
+- native mobile saved-creations library
 
 No files are uploaded to a server.
 
@@ -85,7 +86,10 @@ The selected effect is anchored to the tracked region using the first-frame plac
 ### Step E: Preview and export
 
 - The user previews the tracked result in-browser.
-- The final animation is exported as GIF or animated WebP.
+- On web, the final animation can be exported as GIF or animated WebP.
+- On native mobile, the primary export format is GIF.
+- Native mobile automatically saves successful exports into `My Creations`.
+- Native mobile GIF export supports both save-only and save-then-share flows.
 
 ## Tracking behavior
 
@@ -118,6 +122,14 @@ The UI now includes:
 - a short post-tracking reveal before moving into effect selection
 - a mobile-safe canvas interaction fix for pointer capture during drag
 
+Native mobile also adds:
+
+- a bottom tab bar with `Create` and `My Creations`
+- a simple on-device library of saved exports
+- preview, re-share, and delete actions for saved creations
+
+The tab shell and local library are mobile-only. The web app keeps the original single-flow editor layout.
+
 The first frame is shown as soon as a source is loaded so the user can define the tracking target before committing to a sticker, text, or blur choice.
 
 ## Known limitations
@@ -127,5 +139,5 @@ The first frame is shown as soon as a source is loaded so the user can define th
 - MP4 input only, no MP4 export yet
 - no trimming, timeline editing, or multi-object workflows
 - tracking quality depends on visible texture and motion consistency
-- GIF export uses browser-side palette quantization, so animated WebP may look cleaner on some sources
+- GIF export uses browser-side palette quantization, so animated WebP may look cleaner on some sources on web
 - worker/bootstrap behavior is sensitive enough that it is now covered by a dedicated smoke test

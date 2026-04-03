@@ -1,6 +1,6 @@
 # StickToGif
 
-StickToGif is a frontend-only meme tool for attaching a sticker, text, or blur effect to a manually selected object inside a short animation. It accepts animated GIFs and short MP4 clips as input, then tracks the selected subject locally in the browser and exports the result as GIF or animated WebP.
+StickToGif is a frontend-only meme tool for attaching a sticker, text, or blur effect to a manually selected object inside a short animation. It accepts animated GIFs and short MP4 clips as input, then tracks the selected subject locally on-device and exports the result as GIF or animated WebP.
 
 ## Stack
 
@@ -26,6 +26,16 @@ StickToGif is a frontend-only meme tool for attaching a sticker, text, or blur e
 7. Position the effect on the first frame
 8. Preview the composed result
 9. Export a new GIF or animated WebP locally
+
+## Platform behavior
+
+The core editor flow is shared across web and mobile, but the export shell differs by platform.
+
+- Web keeps the original single-flow editor experience.
+- Native mobile adds a bottom-tab shell with `Create` and `My Creations`.
+- Native mobile saves exported files into a small on-device library automatically.
+- Native mobile GIF export supports both `Save GIF` and `Share GIF`.
+- WebP export remains available on web only.
 
 ## UX flow
 
@@ -88,6 +98,14 @@ npm run cap:ios
 npm run cap:android
 ```
 
+If `android/key.properties` exists locally, `npm run cap:sync` and `npm run cap:ios` will be blocked by the repo secret check. For iOS simulator work, use:
+
+```bash
+npm run build:mobile
+node ./scripts/cap-sync.mjs
+open ios/App/StickToGif.xcodeproj
+```
+
 Mobile versioning:
 
 ```bash
@@ -110,6 +128,7 @@ npm run version:bump:major
 - No data is uploaded anywhere by the app.
 - The tracking MVP prioritizes stable translation over aggressive rotation or scale changes.
 - MP4 input reuses the same tracking/export pipeline by sampling video frames locally in the browser.
+- Native mobile stores saved exports in the app filesystem and keeps lightweight metadata in local storage.
 - There is a hidden debug mode for worker/bootstrap diagnostics:
 
 ```text
