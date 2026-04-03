@@ -168,64 +168,32 @@ h1, h2, h3, .serif {
   border-color: rgba(240, 237, 230, 0.4);
 }
 
-.availability-strip {
-  padding: 0 2rem 7rem;
-}
-
-.availability-strip__inner {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 2rem;
-  border-radius: 28px;
-  background: rgba(240, 237, 230, 0.06);
-  border: 1px solid rgba(240, 237, 230, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 2rem;
-}
-
-.availability-strip__inner h2 {
-  font-size: clamp(2rem, 4vw, 3rem);
-  line-height: 1.1;
-  margin-bottom: 0.7rem;
-}
-
-.availability-strip__inner p:last-child {
-  color: var(--color-muted);
-  max-width: 56ch;
-}
-
 .use-cases {
   max-width: 1200px;
   margin: 0 auto;
   padding: 1rem 2rem 7rem;
 }
 
-.use-cases-grid,
-.story-grid {
+.use-cases-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1.2rem;
 }
 
-.use-case-card,
-.story-card {
+.use-case-card {
   padding: 1.5rem;
   border-radius: 24px;
   border: 1px solid rgba(240, 237, 230, 0.1);
   background: rgba(240, 237, 230, 0.04);
 }
 
-.use-case-card h3,
-.story-card h3 {
+.use-case-card h3 {
   font-size: 1.5rem;
   line-height: 1.2;
   margin-bottom: 0.8rem;
 }
 
-.use-case-card p,
-.story-card p {
+.use-case-card p {
   color: var(--color-muted);
   font-size: 1rem;
 }
@@ -236,104 +204,61 @@ h1, h2, h3, .serif {
   overflow: hidden;
 }
 
-.carousel {
-  display: flex;
-  gap: 2.5rem;
-  padding: 0 50vw 3rem 4rem; /* Right padding allows centering the last one */
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-
-.carousel::-webkit-scrollbar {
-  display: none;
-}
-
-.carousel img {
-  height: 650px;
-  border-radius: 24px;
-  scroll-snap-align: center;
-  box-shadow: 0 30px 60px rgba(0,0,0,0.5);
-  border: 1px solid rgba(255,255,255,0.08);
-  flex-shrink: 0;
-  transition: transform 0.4s ease;
-}
-
-.story-grid {
-  max-width: 1200px;
+.steps-list {
+  max-width: 480px;
   margin: 2rem auto 0;
   padding: 0 2rem;
 }
 
-.examples {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 2rem 8rem;
-}
-
-.examples-grid {
+.step-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: 64px 1fr;
+  gap: 1rem;
+  align-items: start;
+  padding: 1.1rem 0;
 }
 
-.example-card {
-  padding: 1rem;
-  border-radius: 24px;
-  background: rgba(240, 237, 230, 0.04);
-  border: 1px solid rgba(240, 237, 230, 0.1);
+.step-number {
+  font-family: var(--font-serif);
+  font-size: 2.5rem;
+  line-height: 1;
+  color: #9f5d39;
+  text-align: right;
 }
 
-.example-card img {
-  display: block;
-  width: 100%;
-  height: 420px;
-  object-fit: cover;
-  object-position: top center;
-  border-radius: 18px;
-  margin-bottom: 1.1rem;
-}
-
-.example-card h3 {
-  font-size: 1.6rem;
-  line-height: 1.2;
-  margin-bottom: 0.7rem;
-}
-
-.example-card p {
-  color: var(--color-muted);
+.step-text {
+  font-size: 1.2rem;
+  color: var(--color-text-light);
+  padding-top: 0.15rem;
 }
 
 @media (max-width: 768px) {
   .hero { padding-top: 5rem; }
-  .carousel { padding-left: 2rem; gap: 1.5rem; }
-  .carousel img { height: 480px; }
   .section-heading { margin-bottom: 2.5rem; }
   .section-heading p:last-child,
   .hero p { font-size: 1.1rem; }
   .trust-points { margin-top: 1.5rem; }
-  .story-grid { padding: 0 1rem; }
   .hero-demo {
     max-width: 280px;
     margin-top: 2rem;
     padding: 0.7rem;
     border-radius: 24px;
   }
-  .availability-strip {
-    padding: 0 1rem 5rem;
+  .use-cases-grid {
+    grid-template-columns: 1fr;
   }
-  .availability-strip__inner {
-    padding: 1.4rem;
-    flex-direction: column;
-    align-items: flex-start;
+  .steps-list {
+    padding: 0 1rem;
   }
-  .examples {
-    padding: 0 1rem 6rem;
+  .step-row {
+    grid-template-columns: 48px 1fr;
+    gap: 0.9rem;
   }
-  .example-card img {
-    height: auto;
-    aspect-ratio: 3 / 4;
+  .step-number {
+    font-size: 2rem;
+  }
+  .step-text {
+    font-size: 1.05rem;
   }
 }
 
@@ -362,6 +287,12 @@ h1, h2, h3, .serif {
 .feature-item p {
   font-size: 1.15rem;
   color: #4a3a31;
+}
+
+.library-callout {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 2rem 7rem;
 }
 
 .technical-proof {
