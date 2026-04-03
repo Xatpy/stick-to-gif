@@ -276,12 +276,15 @@
 
       <label style="margin-top:20px;">2. Pick Subject step (teal box)</label>
       <input type="file" id="img2" accept="image/*">
+
+      <label style="margin-top:20px;">5. My Creations library</label>
+      <input type="file" id="img5" accept="image/*">
     </div>
     <div>
       <label>3. Export step (with sticker pinned)</label>
       <input type="file" id="img3" accept="image/*">
 
-      <label style="margin-top:20px;">4. OS Share Sheet open</label>
+      <label style="margin-top:20px;">6. OS Share Sheet open</label>
       <input type="file" id="img4" accept="image/*">
     </div>
   </div>
@@ -363,13 +366,28 @@
     <!-- Screen 5: The Output -->
     <div class="screenshot-wrapper">
       <div class="screenshot-canvas" id="screen-5">
+        <div class="title-serif">Your GIFs stay saved</div>
+        <div class="subtitle-sans teal" style="color: #9f5d39;">My Creations keeps past exports on your device</div>
+        
+        <div class="device-mockup-wrapper">
+          <div class="device-mockup">
+            <div class="dynamic-island"></div>
+            <img id="render-5" class="device-screen" src="" alt="">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 6: The Output -->
+    <div class="screenshot-wrapper">
+      <div class="screenshot-canvas" id="screen-6">
         <div class="title-serif">Share in seconds</div>
         <div class="subtitle-sans teal" style="color: #9f5d39;">Direct to Messages &amp; WhatsApp</div>
         
         <div class="device-mockup-wrapper">
           <div class="device-mockup">
             <div class="dynamic-island"></div>
-            <img id="render-5" class="device-screen" src="" alt="">
+            <img id="render-6" class="device-screen" src="" alt="">
           </div>
         </div>
       </div>
@@ -422,7 +440,8 @@
     setupInput('img1', 'render-1');
     setupInput('img2', 'render-2');
     setupInput('img3', 'render-3');
-    setupInput('img4', 'render-5');
+    setupInput('img4', 'render-6');
+    setupInput('img5', 'render-5');
 
     // Export function using html2canvas
     async function exportScreenshots() {
