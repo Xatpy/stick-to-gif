@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>StickToGif — Add tracked stickers, text, and blur to GIFs</title>
-  <meta name="description" content="Make memes where stickers follow the action, add moving text overlays, or blur faces in GIFs and short videos. Runs on-device. No uploads, no account, no watermark.">
+  <title>StickToGif - GIF motion tracking editor for stickers, text & blur</title>
+  <meta name="description" content="Track objects in GIFs easily. Add a sticker to a moving GIF, blur faces automatically, or add floating moving text. Runs on-device with zero uploads.">
   <link rel="stylesheet" href="style.css">
   <link rel="shortcut icon" href="assets/logo.png" type="image/png">
   
   <!-- Open Graph / Social Media -->
-  <meta property="og:title" content="StickToGif — Add tracked stickers, text, and blur to GIFs">
-  <meta property="og:description" content="A private GIF tracking editor for stickers, moving text overlays, and blur. Runs on-device with no uploads, no account, and no watermark.">
+  <meta property="og:title" content="StickToGif - GIF motion tracking editor">
+  <meta property="og:description" content="A private GIF tracking editor. Add a sticker to a moving GIF or blur faces automatically on-device.">
   <meta property="og:image" content="assets/logo.png">
   <meta property="og:type" content="website">
   
@@ -25,13 +25,18 @@
 
   <section class="hero">
     <img src="assets/logo.png" alt="StickToGif Logo" class="logo">
-    <p class="eyebrow">Now on the App Store for iPhone</p>
-    <h1>The GIF editor where the edit follows the action.</h1>
-    <p>Pin stickers, text, or blur onto any moving subject. Tracks on-device. No uploads, no account, no watermarks.</p>
+    <p class="eyebrow">Private, On-Device Tracking</p>
+    <h1>Track objects in GIFs - no timeline, no keyframes.</h1>
+    <p>Pin anything to motion in seconds. Make your edits follow the action. Processing happens entirely on your device with zero uploads.</p>
     
     <div class="cta-group">
-      <a href="https://apps.apple.com/us/app/sticktogif/id6761470500" class="btn btn-primary" target="_blank" rel="noopener noreferrer">Download on the App Store</a>
-      <a href="#" class="btn btn-secondary" onclick="alert('Android App pending Play Store review.'); return false;">Google Play (coming soon)</a>
+      <a href="https://xatpy.github.io/stick-to-gif/" class="btn btn-primary" target="_blank" rel="noopener noreferrer">Try it now</a>
+      <a href="https://apps.apple.com/us/app/sticktogif/id6761470500" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">Download on the App Store</a>
+      <a href="https://www.chapiware.com/stick-to-gif/" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">Get it on Google Play</a>
+    </div>
+
+    <div class="trust-element">
+      Built by an independent developer. Private by design. No tracking.
     </div>
 
     <ul class="trust-points" aria-label="Key product benefits">
@@ -42,30 +47,94 @@
       <li>Free forever</li>
     </ul>
 
-    <div class="hero-demo">
-      <img src="assets/demo.gif" alt="Example creation showing a tracked sticker following the subject in a GIF">
+    <div class="demo-showcase">
+      <div class="demo-original-container">
+        <div class="demo-item">
+          <span class="demo-label">Original</span>
+          <div class="hero-demo" style="margin-top: 0">
+            <img src="assets/cat-original.gif" alt="Original moving GIF before tracking">
+          </div>
+        </div>
+      </div>
+      
+      <svg class="demo-arrow" focusable="false" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+
+      <div class="demo-edits-container">
+        <div class="demo-item">
+          <span class="demo-label">Tracked sticker</span>
+          <div class="hero-demo" style="margin-top: 0">
+            <img src="assets/demo.gif" alt="Add sticker to moving GIF">
+          </div>
+        </div>
+        <div class="demo-item">
+          <span class="demo-label">Tracked blur</span>
+          <div class="hero-demo" style="margin-top: 0">
+            <img src="assets/blurry-tracking.gif" alt="Blur face in GIF automatically">
+          </div>
+        </div>
+        <div class="demo-item">
+          <span class="demo-label">Tracked text</span>
+          <div class="hero-demo" style="margin-top: 0">
+            <img src="assets/text-tracking.gif" alt="GIF motion tracking editor for text">
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
   <section class="use-cases">
     <div class="section-heading">
-      <p class="eyebrow">What you can do</p>
-      <h2>A private GIF tracking editor for actual use cases</h2>
-      <p>StickToGif is built for the moments where a normal GIF editor is too static and a cloud tool is too annoying.</p>
+      <p class="eyebrow">What people use it for</p>
+      <h2>Built for real motion</h2>
+      <p>StickToGif handles the tricky moving edits that static editors can't.</p>
     </div>
 
     <div class="use-cases-grid">
       <div class="use-case-card">
-        <h3>Stickers that follow the action</h3>
-        <p>Add emoji or a custom image to a moving subject. No keyframes, no timeline — tap and track.</p>
+        <h3>Meme editing</h3>
+        <p>Pin a reaction face or custom image that follows your friend exactly.</p>
       </div>
       <div class="use-case-card">
-        <h3>Blur that keeps up as things move</h3>
-        <p>Track a face, license plate, or screen through a shot and keep the blur locked on frame by frame.</p>
+        <h3>Easy privacy</h3>
+        <p>Blur a face or license plate automatically as it moves through the frame.</p>
       </div>
       <div class="use-case-card">
-        <h3>Text that stays on the subject</h3>
-        <p>Add a moving label or punchline that follows the person or object instead of floating over the whole clip.</p>
+        <h3>Moving text</h3>
+        <p>Add captions that stick to a moving subject instead of floating globally.</p>
+      </div>
+      <div class="use-case-card">
+        <h3>Sports highlights</h3>
+        <p>Highlight a player across a messy, fast-moving play.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="use-cases">
+    <div class="section-heading">
+      <p class="eyebrow">Comparison</p>
+      <h2>Why this feels different</h2>
+    </div>
+    
+    <div class="comparison">
+      <div class="compare-row header-row">
+        <div class="compare-item">Other tools</div>
+        <div class="compare-item">StickToGif</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-item other">Requires upload</div>
+        <div class="compare-item sticktogif">Runs on-device</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-item other">Timeline editing</div>
+        <div class="compare-item sticktogif">Tap and track</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-item other">Watermarks</div>
+        <div class="compare-item sticktogif">No watermark</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-item other">Accounts</div>
+        <div class="compare-item sticktogif">No account</div>
       </div>
     </div>
   </section>
@@ -93,22 +162,6 @@
         <div class="step-number">4.</div>
         <div class="step-text">Export and share directly</div>
       </div>
-    </div>
-  </section>
-
-  <section class="features">
-    <div class="section-heading">
-      <p class="eyebrow">Why it feels different</p>
-      <h2>Built like a tool, not a content trap</h2>
-      <p>Most alternatives want your upload, your subscription, or a watermark on the result. StickToGif runs the tracking locally using WebAssembly and a background worker — your media never leaves your device during processing. One tap to track, one tap to share.</p>
-    </div>
-  </section>
-
-  <section class="library-callout">
-    <div class="section-heading">
-      <p class="eyebrow">On-device library</p>
-      <h2>Your exports stay saved on your device</h2>
-      <p>My Creations keeps every GIF you export in a local library. Open, re-share, or delete past exports anytime — no cloud account needed.</p>
     </div>
   </section>
 
