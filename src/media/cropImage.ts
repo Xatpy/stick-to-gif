@@ -20,7 +20,7 @@ function canvasToBlob(canvas: HTMLCanvasElement) {
   });
 }
 
-function normalizeCropRect(rect: Rect, width: number, height: number) {
+export function normalizeCropRect(rect: Rect, width: number, height: number) {
   const bounded = clampRectToBounds(rect, width, height);
   const x = Math.max(0, Math.floor(bounded.x));
   const y = Math.max(0, Math.floor(bounded.y));

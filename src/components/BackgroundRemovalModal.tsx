@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import type { Rect } from '../types';
-import { isFullImageCrop, cropImageBitmapToBlob } from '../media/cropImage';
+import type { Point, Rect } from '../types';
+import { applyPolygonMask } from '../media/applyPolygonMask';
+import { isFullImageCrop, cropImageBitmapToBlob, normalizeCropRect } from '../media/cropImage';
 import { ImageCropper } from './ImageCropper';
+import { PolygonMaskEditor } from './PolygonMaskEditor';
 import { Modal } from './Modal';
 
 type LoadState = 'idle' | 'loading' | 'ready' | 'error';
-type ModalStage = 'crop' | 'review';
+type ModalStage = 'crop' | 'review' | 'manual';
 type PreviewMode = 'crop' | 'cutout';
 
 interface BackgroundRemovalModalProps {
@@ -40,6 +42,7 @@ export function BackgroundRemovalModal({
   const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
   const [cropRect, setCropRect] = useState<Rect | null>(null);
   const [croppedBlob, setCroppedBlob] = useState<Blob | null>(null);
+  const [croppedSize, setCroppedSize] = useState<{ width: number; height: number } | null>(null);
   const [croppedPreviewUrl, setCroppedPreviewUrl] = useState<string | null>(null);
   const [processedBlob, setProcessedBlob] = useState<Blob | null>(null);
   const [processedPreviewUrl, setProcessedPreviewUrl] = useState<string | null>(null);
@@ -47,6 +50,8 @@ export function BackgroundRemovalModal({
   const [isPreparingCrop, setIsPreparingCrop] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
   const [processingError, setProcessingError] = useState<string | null>(null);
+  const [polygonPoints, setPolygonPoints] = useState<Point[]>([]);
+  const [polygonClosed, setPolygonClosed] = useState(false);
   const activeFileRef = useRef<File | null>(null);
 
   useEffect(() => {
@@ -130,10 +135,13 @@ export function BackgroundRemovalModal({
     if (!isOpen) {
       setStage('crop');
       setCroppedBlob(null);
+      setCroppedSize(null);
       setProcessedBlob(null);
       setPreviewMode('crop');
       setIsPreparingCrop(false);
       setIsRemoving(false);
+      setPolygonPoints([]);
+      setPolygonClosed(false);
       setLoadError(null);
       if (loadState === 'loading' || loadState === 'error') {
         setLoadState('idle');
@@ -144,9 +152,13 @@ export function BackgroundRemovalModal({
 
     setStage('crop');
     setCroppedBlob(null);
+    setCroppedSize(null);
     setProcessedBlob(null);
     setPreviewMode('crop');
     setIsPreparingCrop(false);
+    setIsRemoving(false);
+    setPolygonPoints([]);
+    setPolygonClosed(false);
     setLoadError(null);
     if (loadState === 'error') {
       setLoadState('idle');
@@ -161,8 +173,11 @@ export function BackgroundRemovalModal({
 
     setStage('crop');
     setCroppedBlob(null);
+    setCroppedSize(null);
     setProcessedBlob(null);
     setPreviewMode('crop');
+    setPolygonPoints([]);
+    setPolygonClosed(false);
     setProcessingError(null);
   }, [cropRect?.x, cropRect?.y, cropRect?.width, cropRect?.height]);
 
@@ -211,12 +226,17 @@ export function BackgroundRemovalModal({
       const selectedFile = file;
       setIsPreparingCrop(true);
       setProcessingError(null);
+      const normalizedCrop = normalizeCropRect(cropRect, imageSize.width, imageSize.height);
       const nextCroppedBlob = await createCroppedBlob(selectedFile, cropRect);
 
       if (activeFileRef.current !== selectedFile) {
         return;
       }
 
+      setCroppedSize({
+        width: normalizedCrop.width,
+        height: normalizedCrop.height,
+      });
       setCroppedBlob(nextCroppedBlob);
       setStage('review');
     } catch (error) {
@@ -248,6 +268,16 @@ export function BackgroundRemovalModal({
       type: 'image/png',
       lastModified: Date.now(),
     }));
+  };
+
+  const handleOpenManualOutline = () => {
+    if (!croppedBlob || !croppedSize) {
+      return;
+    }
+
+    setStage('manual');
+    setPreviewMode('crop');
+    setProcessingError(null);
   };
 
   const handleRemoveBackground = async () => {
@@ -304,6 +334,41 @@ export function BackgroundRemovalModal({
     }));
   };
 
+  const handleApplyManualOutline = async () => {
+    if (!file || !croppedBlob || !polygonClosed || polygonPoints.length < 3) {
+      return;
+    }
+
+    const selectedFile = file;
+
+    try {
+      setIsRemoving(true);
+      setProcessingError(null);
+      const croppedBitmap = await createImageBitmap(croppedBlob);
+
+      try {
+        const nextProcessedBlob = await applyPolygonMask(croppedBitmap, polygonPoints);
+        if (activeFileRef.current !== selectedFile) {
+          return;
+        }
+
+        setProcessedBlob(nextProcessedBlob);
+        setPreviewMode('cutout');
+        setStage('review');
+      } finally {
+        croppedBitmap.close();
+      }
+    } catch (error) {
+      if (activeFileRef.current === selectedFile) {
+        setProcessingError(error instanceof Error ? error.message : 'Unable to create that cutout.');
+      }
+    } finally {
+      if (activeFileRef.current === selectedFile) {
+        setIsRemoving(false);
+      }
+    }
+  };
+
   const handleResetCrop = () => {
     if (!imageSize) {
       return;
@@ -329,14 +394,16 @@ export function BackgroundRemovalModal({
         <p className="background-removal__hint">
           {stage === 'crop'
             ? 'Drag the box to isolate the part of the image you want.'
-            : 'Review the cropped part, then either use it directly or remove its background.'}
+            : stage === 'manual'
+              ? 'Tap around the subject to build a polygon. Tap the first point to close it.'
+              : 'Review the cropped part, then either use it directly, remove its background, or outline it manually.'}
         </p>
 
         <div className="background-removal__toolbar">
           <span className="background-removal__meta">
             {stage === 'crop'
               ? imageSize ? `${imageSize.width} × ${imageSize.height}px source` : 'Preparing image…'
-              : cropRect ? `${Math.round(cropRect.width)} × ${Math.round(cropRect.height)}px crop` : 'Preparing crop…'}
+              : croppedSize ? `${croppedSize.width} × ${croppedSize.height}px crop` : cropRect ? `${Math.round(cropRect.width)} × ${Math.round(cropRect.height)}px crop` : 'Preparing crop…'}
           </span>
           {stage === 'crop' ? (
             <button
@@ -346,6 +413,15 @@ export function BackgroundRemovalModal({
               disabled={!imageSize || isPreparingCrop || isRemoving}
             >
               Reset crop
+            </button>
+          ) : stage === 'manual' ? (
+            <button
+              type="button"
+              className="button button--secondary button--sm"
+              onClick={() => setStage('review')}
+              disabled={isPreparingCrop || isRemoving}
+            >
+              Back to review
             </button>
           ) : (
             <button
@@ -381,7 +457,18 @@ export function BackgroundRemovalModal({
         )}
 
         <div className="background-removal__preview">
-          {stage === 'review' && activeReviewPreviewUrl ? (
+          {stage === 'manual' && croppedPreviewUrl && croppedSize ? (
+            <PolygonMaskEditor
+              imageUrl={croppedPreviewUrl}
+              imageWidth={croppedSize.width}
+              imageHeight={croppedSize.height}
+              points={polygonPoints}
+              closed={polygonClosed}
+              onPointsChange={setPolygonPoints}
+              onClosedChange={setPolygonClosed}
+              disabled={isRemoving}
+            />
+          ) : stage === 'review' && activeReviewPreviewUrl ? (
             <img
               src={activeReviewPreviewUrl}
               alt={previewMode === 'cutout' ? 'Background removed crop preview' : 'Cropped image preview'}
@@ -411,7 +498,7 @@ export function BackgroundRemovalModal({
             <p className="background-removal__error">{loadError}</p>
           )}
           {isRemoving && (
-            <p>Removing background from the current crop…</p>
+            <p>{stage === 'manual' ? 'Creating cutout from the current crop…' : 'Removing background from the current crop…'}</p>
           )}
           {processingError && (
             <p className="background-removal__error">{processingError}</p>
@@ -419,11 +506,20 @@ export function BackgroundRemovalModal({
           {stage === 'crop' && cropRect && !isPreparingCrop && !isRemoving && (
             <p>Drag inside the box to move it. Drag the corners to resize it.</p>
           )}
+          {stage === 'manual' && !isRemoving && !processingError && (
+            <p>
+              {polygonClosed
+                ? 'Drag points to adjust the outline, then create the cutout.'
+                : polygonPoints.length >= 3
+                  ? 'Tap the first point to close the polygon.'
+                  : 'Tap to add points around the part you want to keep.'}
+            </p>
+          )}
           {stage === 'review' && canReviewCrop && !processedBlob && !isPreparingCrop && !isRemoving && !processingError && (
-            <p>Use this cropped image as-is, or remove its background.</p>
+            <p>Use this cropped image as-is, try automatic background removal, or outline it manually.</p>
           )}
           {stage === 'review' && processedBlob && !isRemoving && !processingError && (
-            <p>Cutout ready. You can still switch back to the crop tab and adjust it.</p>
+            <p>Cutout ready. You can still switch back to the crop, or open manual outline for a cleaner edge.</p>
           )}
         </div>
 
@@ -440,6 +536,47 @@ export function BackgroundRemovalModal({
             >
               {isPreparingCrop ? 'Preparing…' : 'Continue'}
             </button>
+          ) : stage === 'manual' ? (
+            <>
+              <button
+                type="button"
+                className="button button--secondary button--full"
+                onClick={() => {
+                  if (polygonPoints.length === 0) {
+                    return;
+                  }
+
+                  if (polygonClosed) {
+                    setPolygonClosed(false);
+                    return;
+                  }
+
+                  setPolygonPoints((currentPoints) => currentPoints.slice(0, -1));
+                }}
+                disabled={isRemoving || polygonPoints.length === 0}
+              >
+                {polygonClosed ? 'Reopen' : 'Undo point'}
+              </button>
+              <button
+                type="button"
+                className="button button--secondary button--full"
+                onClick={() => {
+                  setPolygonPoints([]);
+                  setPolygonClosed(false);
+                }}
+                disabled={isRemoving || (polygonPoints.length === 0 && !polygonClosed)}
+              >
+                Reset outline
+              </button>
+              <button
+                type="button"
+                className="button button--full"
+                onClick={() => void handleApplyManualOutline()}
+                disabled={isRemoving || !polygonClosed || polygonPoints.length < 3}
+              >
+                {isRemoving ? 'Creating…' : 'Create cutout'}
+              </button>
+            </>
           ) : (
             <>
               <button
@@ -449,6 +586,14 @@ export function BackgroundRemovalModal({
                 disabled={!canReviewCrop || isPreparingCrop || isRemoving}
               >
                 Use crop
+              </button>
+              <button
+                type="button"
+                className="button button--secondary button--full"
+                onClick={handleOpenManualOutline}
+                disabled={!canReviewCrop || isPreparingCrop || isRemoving}
+              >
+                Manual outline
               </button>
               {processedBlob ? (
                 <button

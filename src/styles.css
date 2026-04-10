@@ -681,7 +681,7 @@ select {
 
 .mode-buttons {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
 }
 
@@ -721,6 +721,33 @@ select {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
+}
+
+.overlay-sticker-actions--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.overlay-builder-hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.overlay-inline-error {
+  margin: -2px 0 0;
+  color: #a6552b;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.overlay-section-label {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .overlay-scale {
@@ -1073,6 +1100,36 @@ select {
   cursor: nwse-resize;
 }
 
+.polygon-mask-editor {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  max-height: min(38vh, 340px);
+  border-radius: 12px;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+}
+
+.polygon-mask-editor.is-disabled {
+  cursor: progress;
+}
+
+.polygon-mask-editor img {
+  display: block;
+  max-width: 100%;
+  max-height: min(38vh, 340px);
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+.polygon-mask-editor__overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
 .background-removal__placeholder {
   color: var(--text-muted);
   font-weight: 700;
@@ -1107,8 +1164,9 @@ select {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.background-removal__actions--review {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+.background-removal__actions--review,
+.background-removal__actions--manual {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 /* Text input */
@@ -1716,12 +1774,8 @@ select {
     gap: 6px;
   }
 
-  .overlay-sticker-actions> :nth-child(1) {
-    order: 2;
-  }
-
-  .overlay-sticker-actions> :nth-child(2) {
-    order: 1;
+  .overlay-sticker-actions--single {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .emoji-picker__actions {
@@ -1756,6 +1810,11 @@ select {
     max-height: min(34vh, 280px);
   }
 
+  .polygon-mask-editor,
+  .polygon-mask-editor img {
+    max-height: min(34vh, 280px);
+  }
+
   .image-cropper__label {
     left: 8px;
     top: 8px;
@@ -1763,7 +1822,8 @@ select {
   }
 
   .background-removal__actions--crop,
-  .background-removal__actions--review {
+  .background-removal__actions--review,
+  .background-removal__actions--manual {
     grid-template-columns: 1fr;
   }
 
