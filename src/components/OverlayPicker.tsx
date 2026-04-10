@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { createEmojiOverlayAsset, getPresets } from '../assets/presets';
+import { BackgroundRemovalModal } from './BackgroundRemovalModal';
 import { Modal } from './Modal';
 import type { OverlayMode, OverlayAsset, TextOverlayStyle, BlurStyle } from '../types';
 
@@ -66,6 +67,7 @@ export function OverlayPicker({
   onBlurStyleChange,
 }: OverlayPickerProps) {
   const [emojiModalOpen, setEmojiModalOpen] = useState(false);
+  const [pendingStickerUpload, setPendingStickerUpload] = useState<File | null>(null);
   const [selectedEmoji, setSelectedEmoji] = useState('😀');
   const presets = getPresets();
 
@@ -114,7 +116,7 @@ export function OverlayPicker({
                   type="file"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
-                    if (file) onStickerUpload(file);
+                    if (file) setPendingStickerUpload(file);
                     e.currentTarget.value = '';
                   }}
                 />
@@ -306,6 +308,16 @@ export function OverlayPicker({
           </div>
         </div>
       </Modal>
+
+      <BackgroundRemovalModal
+        isOpen={!!pendingStickerUpload}
+        file={pendingStickerUpload}
+        onClose={() => setPendingStickerUpload(null)}
+        onUseImage={(file) => {
+          setPendingStickerUpload(null);
+          onStickerUpload(file);
+        }}
+      />
     </>
   );
 }
